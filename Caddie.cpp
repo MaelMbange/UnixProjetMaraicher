@@ -80,36 +80,10 @@ int main(int argc,char* argv[])
 
       case LOGOUT :   // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete LOGOUT reçue de %d\n",getpid(),m.expediteur);
-                      NORMAL_PRINT("\033[38;5;13m(CADDIE) SUPPRESSION DU PROCESSUS...\033[0m");
-                      mysql_close(connexion);
-                      exit(0);
                       break;
 
       case CONSULT :  // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete CONSULT reçue de %d\n",getpid(),m.expediteur);
-                      
-                      MYSQL_RES* result_  = mysql_store_result(connexion);
-                      MYSQL_ROW row_;
-                      int champs = mysql_num_fields(result_);
-                      int id = 0;
-
-                      while((row_= mysql_fetch_row(result_)) == !NULL)
-                      {
-                        id = atoi(row_[0]);
-                        if(id == m.data1)
-                        {
-                          ARTICLE article_;
-                          article_.id         = id;
-                          strcpy(article_.intitule,row_[1]);
-
-                          reponse.type        = 1;
-                          reponse.expediteur  = getpid();
-                          reponse.requete     =
-                        }
-                      }
-
-
-
                       break;
 
       case ACHAT :    // TO DO

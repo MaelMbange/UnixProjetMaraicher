@@ -4,14 +4,14 @@
 #include <string>
 using namespace std;
 
-#include "protocole.h"
-
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <signal.h>
+
+#include "protocole.h"
 
 extern WindowClient *w;
 
@@ -22,60 +22,13 @@ ARTICLE articleEnCours;
 float totalCaddie = 0.0;
 char Curr_Name[100];
 
+
 char print_msg[100];
 
 void handlerSIGUSR1(int sig);
 void handlerSIGUSR2(int sig);
 
-void handlerSIGINT(int sig);
-
 #define REPERTOIRE_IMAGES "images/"
-
-void handlerCONNEXION(int);
-
-void handlerSIGINT(int sig)
-{
-  w->closeEvent(NULL);
-}
-
-void handlerSIGUSR2(int sig)
-{
-  w->setPublicite(pShm);
-}
-
-
-
-void handlerCONNEXION(int)
-{
-  MESSAGE msg;
-  if(msgrcv(idQ,&msg,sizeof(MESSAGE)-sizeof(long),getpid(),0) == -1)
-  {
-    sprintf(print_msg,"(CLIENT) pid=%d : ERREUR MSGRCV",getpid());
-    ERROR_PRINT(print_msg);
-    exit(1);
-  }
-  if(msg.requete == CONNECT)
-  {
-    sprintf(print_msg,"(CLIENT) pid=%d : CONNEXION SUCCEED...",getpid());
-    NORMAL_PRINT(print_msg);
-    return;
-  }
-  if(msg.requete == DECONNECT)
-  {
-    sprintf(print_msg,"(CLIENT) pid=%d : CONNEXION REFUSED...",getpid());
-    ERROR_PRINT(print_msg);    
-
-    sprintf(print_msg,"(CLIENT) pid=%d : PROGRAM ENDING IN ...",getpid());
-    for(int i = 5;i >= 0; i--)
-    {
-      sprintf(print_msg,"%d",i);
-      ERROR_PRINT(print_msg);
-      sleep(1);
-    }
-    
-    exit(1);
-  }
-}
 
 WindowClient::WindowClient(QWidget *parent) : QMainWindow(parent), ui(new Ui::WindowClient)
 {
@@ -95,79 +48,65 @@ WindowClient::WindowClient(QWidget *parent) : QMainWindow(parent), ui(new Ui::Wi
     ui->tableWidgetPanier->verticalHeader()->setVisible(false);
     ui->tableWidgetPanier->horizontalHeader()->setStyleSheet("background-color: lightyellow");
 
+    //********************************************************
     // Recuperation de l'identifiant de la file de messages
-    //fprintf(stderr,"(CLIENT %d) Recuperation de l'id de la file de messages\n",getpid());
-    // TO DO
-    idQ = msgget(CLE,0);
+    //******************************************************** 
+
+    idQ = getMessageQueue(CLE,"(CLIENT) ERREUR MSGGET.");
     if(idQ == -1)
     {
-      sprintf(print_msg,"(CLIENT) pid=%d : Could not acces to the server...",getpid());
-      ERROR_PRINT(print_msg);
       exit(1);
     }
+    
+    //********************************************************
+    //********************************************************
+    //******************************************************** 
+
+    // Recuperation de l'identifiant de la mémoire partagée
+    //fprintf(stderr,"(CLIENT %d) Recuperation de l'id de la mémoire partagée\n",getpid());
+    // TO DO
 
     // Attachement à la mémoire partagée
     // TO DO
-    fprintf(stderr,"(PUBLICITE %d) Recuperation de l'id de la memoire partagee\n",getpid());
-    if((idShm = shmget(CLE,0,0)) == -1)
-    {
-      perror("(CLIENT) Erreur de shmget");
-      exit(1);
-    }
-
-    fprintf(stderr,"(PUBLICITE %d) Attachement a la memoire partagee\n",getpid());
-    if((pShm = (char*)shmat(idShm,NULL,SHM_RDONLY)) == (char*)-1)
-    {
-      perror("(CLIENT) Erreur de shmat");
-      exit(1);
-    }
-
 
     // Armement des signaux
     // TO DO
     //SIGUSR1 RECEPETION CONNEXION
     struct sigaction sig;
     sigemptyset(&sig.sa_mask);
-    sig.sa_handler = handlerCONNEXION;
-    sig.sa_flags = 0;
-    sigaction(SIGHUP,&sig,NULL);
-
-    sigemptyset(&sig.sa_mask);
     sig.sa_handler = handlerSIGUSR1;
     sig.sa_flags = 0;
     sigaction(SIGUSR1,&sig,NULL);
 
-    sigemptyset(&sig.sa_mask);
-    sig.sa_handler = handlerSIGUSR2;
-    sig.sa_flags = 0;
-    sigaction(SIGUSR2,&sig,NULL);
+    //********************************************************
+    //  Envoie d'un message de connexion au serveur
+    //******************************************************** 
 
-    sigemptyset(&sig.sa_mask);
-    sig.sa_handler = handlerSIGINT;
-    sig.sa_flags = 0;
-    sigaction(SIGINT,&sig,NULL);
+    MESSAGE msg;
+    clearMessage(msg);
+    makeMessageBasic(msg,SERVEUR,getpid(),CONNECT);
+    printMessage(msg);
+    sendMessageQueue(idQ,msg);
+    NORMAL_PRINT("MESSAGE ENVOYE");
 
-    /*******************************************
-    Envoie d'un message de connexion au serveur
-    *******************************************/
-    MESSAGE msg; int isMsgSend;
-    
-    msg.type = 1;
-    msg.requete = CONNECT;
-    msg.expediteur = getpid();
+    MESSAGE rep;
+    if(recieveMessageQueue(idQ,rep,getpid()) == -1)
+      exit(1);
 
-    isMsgSend = msgsnd(idQ,&msg,sizeof(MESSAGE)-sizeof(long),0);
-
-    if(isMsgSend == -1)
+    if(rep.data1 == 0)
     {
-      sprintf(print_msg,"(CLIENT) pid=%d : Message Connexion Failed...",getpid());
-      ERROR_PRINT(print_msg);
+      ERROR_PRINT("ECHEC DE CONNEXION AU SERVER...");
       exit(1);
     }
 
-    // pause();
+    NORMAL_PRINT("CONNEXION AU SERVEUR REUSSIE...");
 
-    // NORMAL_PRINT("CLIENT CREE...");
+    fprintf(stderr,"PID CLIENT: %d\n",getpid());
+    //********************************************************
+    //********************************************************
+    //******************************************************** 
+
+    
     // Exemples à supprimer
     /* setPublicite("Promotions sur les concombres !!!");
     setArticle("pommes",5.53,18,"pommes.jpg");
@@ -407,47 +346,19 @@ void WindowClient::closeEvent(QCloseEvent *event)
 {
   // TO DO (étape 1)
   // Envoi d'une requete DECONNECT au serveur
-
-  MESSAGE msg; int isMsgSend;
-
-  // envoi d'un logout si logged
-  if(logged)
-  {
-    msg.type = 1;
-    msg.requete = LOGOUT;
-    msg.expediteur = getpid();
-    sprintf(msg.data2,"%s",Curr_Name);
-
-    isMsgSend = msgsnd(idQ,&msg,sizeof(MESSAGE)-sizeof(long),0);
-
-    if(isMsgSend == -1)
-    {
-      sprintf(print_msg,"(CLIENT) pid=%d : Message Logout Failed...",getpid());
-      ERROR_PRINT(print_msg);
-      exit(1);
-    }
-
-    sprintf(print_msg,"(CLIENT) pid=%d : LOGOUT COMPLETED...",getpid());
-    NORMAL_PRINT(print_msg);
-  }
-    
-  msg.type = 1;
-  msg.requete = DECONNECT;
-  msg.expediteur = getpid();
-
-  isMsgSend = msgsnd(idQ,&msg,sizeof(MESSAGE)-sizeof(long),0);
-
-  if(isMsgSend == -1)
-  {
-    sprintf(print_msg,"(CLIENT) pid=%d : Message Deconnexion Failed...",getpid());
-    ERROR_PRINT(print_msg);
-    exit(1);
-  }
-
-  sprintf(print_msg,"(CLIENT) pid=%d : DECONNEXION COMPLETED...",getpid());
-  NORMAL_PRINT(print_msg);  
-
   // Envoi d'une requete de deconnexion au serveur
+    NORMAL_PRINT("CLIC BOUTON QUITTER.");
+
+    MESSAGE msg;
+    clearMessage(msg);
+    makeMessageBasic(msg,SERVEUR,getpid(),LOGOUT);
+    sendMessageQueue(idQ,msg);
+
+    clearMessage(msg);
+
+    makeMessageBasic(msg,SERVEUR,getpid(),DECONNECT);
+    if(sendMessageQueue(idQ,msg) == -1)
+      exit(1);    
 
   exit(0);
 }
@@ -458,26 +369,17 @@ void WindowClient::closeEvent(QCloseEvent *event)
 void WindowClient::on_pushButtonLogin_clicked()
 {
     // Envoi d'une requete de login au serveur
-    // TO DO
+    // TO DO    
+    MESSAGE msg;
+    clearMessage(msg);
+    makeMessageBasic(msg,SERVEUR,getpid(),LOGIN);
+    makeMessageData(msg,isNouveauClientChecked(),getNom(),getMotDePasse());
 
-  MESSAGE m;
-
-  sprintf(m.data2,getNom());
-  sprintf(m.data3,getMotDePasse());
-  m.data1 = isNouveauClientChecked();
-  m.requete = LOGIN;
-  m.expediteur = getpid();
-  m.type = 1;
-
-  int isMsgSend = msgsnd(idQ,&m,sizeof(MESSAGE)-sizeof(long),0);
-
-  if(isMsgSend == -1)
-  {
-    sprintf(print_msg,"(CLIENT) pid=%d : Message Login Failed...",getpid());
-    ERROR_PRINT(print_msg);
-    exit(1);
-  }
-}
+    //***********************
+    //Partie envoie message
+    //***********************
+    sendMessageQueue(idQ,msg);    
+} 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void WindowClient::on_pushButtonLogout_clicked()
@@ -487,26 +389,13 @@ void WindowClient::on_pushButtonLogout_clicked()
 
     // Envoi d'une requete de logout au serveur
     // TO DO
-    MESSAGE msg; int isMsgSend;
-
-    msg.type = 1;
-    msg.requete = LOGOUT;
-    msg.expediteur = getpid();
-    sprintf(msg.data2,"%s",Curr_Name);
-
-    isMsgSend = msgsnd(idQ,&msg,sizeof(MESSAGE)-sizeof(long),0);
-
-    if(isMsgSend == -1)
-    {
-      sprintf(print_msg,"(CLIENT) pid=%d : Message Logout Failed...",getpid());
-      ERROR_PRINT(print_msg);
-      exit(1);
-    }
-
-    sprintf(print_msg,"(CLIENT) pid=%d : LOGOUT COMPLETED...",getpid());
-    NORMAL_PRINT(print_msg);
+    MESSAGE msg;
+    clearMessage(msg);
+    makeMessageBasic(msg,SERVEUR,getpid(),LOGOUT);
+    sendMessageQueue(idQ,msg); 
 
     logoutOK();
+   
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -582,43 +471,34 @@ void WindowClient::on_pushButtonPayer_clicked()
 void handlerSIGUSR1(int sig)
 {
     MESSAGE m;
-    MESSAGE rep;
   
     if (msgrcv(idQ,&m,sizeof(MESSAGE)-sizeof(long),getpid(),0) != -1)  // !!! a modifier en temps voulu !!!
     {
       switch(m.requete)
       {
         case LOGIN :
-                    if(m.data1 == 1)
+                    switch(m.data1)
                     {
-                      w->dialogueMessage("Login",m.data4);
-                      sprintf(print_msg,"(CLIENT) pid=%d : LOGIN SUCCEED...",getpid());
-                      NORMAL_PRINT(print_msg);
-                      logged = true;
-                      w->loginOK();
-                      sprintf(Curr_Name,"%s",w->getNom());
-                      
-                      rep.type        = 1;
-                      rep.expediteur  = getpid();
-                      rep.requete     = CONSULT;
-                      rep.data1       = 1;
-
-                      int isMsgSend = msgsnd(idQ,&rep,sizeof(MESSAGE)-sizeof(long),0);
-                      //NORMAL_PRINT("Message envoyé !!!!!!!");
-                      if(isMsgSend == -1)
-                      {
-                        sprintf(print_msg,"(CLIENT) pid=%d : Message CONSULT send Failed...",getpid());
-                        ERROR_PRINT(print_msg);
-                        exit(1);
-                      }
-                    }
-                    else if(m.data1 == 0)
-                    {
-                      logged = false;
-                      w->dialogueErreur("Login",m.data4);
-                      sprintf(print_msg,"(CLIENT) pid=%d : LOGIN FAILED...",getpid());
-                      ERROR_PRINT(print_msg);
-                    }
+                      case 1:
+                              w->dialogueMessage("Login","succeed!");
+                              // setMotDePasse("");
+                              w->loginOK();
+                              return;
+                      case 2:
+                              w->dialogueErreur("Login Failed!","Account does not exist!");
+                              return;
+                      case 3:
+                              w->dialogueErreur("Login Failed!","Wrong password!");
+                              return;
+                      case 4:
+                              w->dialogueMessage("Registration","Completed!");
+                              // setMotDePasse("");
+                              w->loginOK();
+                              return;
+                      case 5:
+                              w->dialogueErreur("Login Failed!","Account already exist!");
+                              return;
+                    } 
                     break;
 
         case CONSULT : // TO DO (étape 3)

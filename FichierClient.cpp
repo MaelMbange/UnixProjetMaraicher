@@ -182,3 +182,33 @@ int listeClients(CLIENT *vecteur) // le vecteur doit etre suffisamment grand
   close(file);
   return nbr;
 }
+
+int signin(const char* name, const char* password)
+{
+  short pos = estPresent(name);
+  if(pos == -1 || pos == 0)
+  {
+    ajouteClient(name,password);
+    // fprintf(stderr,"Client Ajouté !");
+    return 1;
+  }
+  return -1;
+}
+
+int logIn(const char* name,const char* password)
+{
+  short pos = estPresent(name);
+  
+  if(pos == -1 || pos == 0)
+    return -1;
+  
+  short mdp = verifieMotDePasse(pos,password);
+
+  if(mdp == 0)
+    return -2;
+
+  if(mdp == 1)
+    return 1;
+
+  return 1;
+}

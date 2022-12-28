@@ -33,4 +33,16 @@ int listeClients(CLIENT *vecteur);
 // retourne le nombre de clients présents dans le fichier
 //          -1 si le fichier n'existe pas
 
+
+int signin(const char* name, const char* password);
+//  recoit le nom et le mdp
+//  si 1 alors la personne à été rajoutée au fichier.
+//  si -1 alors la personne est deja présente dans le fichier
+//  donc pas d'ajout.
+int logIn(const char* name,const char* password);
+// Verifie si une personne peut se log ou non.
+// si -1 => la personne n'existe pas.
+// si -2 => mdp incorrecte.
+// si 1 => mdp correcte.
+
 #endif
