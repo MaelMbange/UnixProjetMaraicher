@@ -241,7 +241,7 @@ void printMessage(MESSAGE& msg)
 int createSharedMemory(int Key,size_t size ,const char* msg = "Erreur de creation de la memoire partagee.");
 void deleteSharedMemory(int shmfd,const char* msg = "Erreur de suppression de la memoire partagee.");
 int getSharedMemory(int Key,const char* msg = "Erreur de recuperation de la memoire partagee.");
-int connectSharedMemory(int Key,const char* msg = "Erreur de connexion de la memoire partagee.");
+char* connectSharedMemory(int shmfd,const char* flag = "RD",const char* msg = "Erreur de connexion de la memoire partagee.");
 
 int createSharedMemory(int Key, size_t size,const char* msg)
 {
@@ -273,9 +273,35 @@ int getSharedMemory(int Key,const char* msg)
   return shmfd;
 }
 
-int connectSharedMemory(int Key,const char* msg)
+char* connectSharedMemory(int shmfd,const char* flag,const char* msg)
 {
-  
+  char* pshm;
+  if(strcmp(flag,"RD") == 0)
+  {
+    pshm = (char*)shmat(shmfd,NULL,SHM_RDONLY);
+    if(pshm == (char*)-1)
+    {
+      ERROR_PRINT(msg);
+      exit(1);
+    }
+    return pshm;
+  }
+  else if(strcmp(flag,"RW") == 0 || flag == NULL)
+  {
+    pshm = (char*)shmat(shmfd,NULL,0);
+    if(pshm == (char*)-1)
+    {
+      ERROR_PRINT(msg);
+      exit(1);
+    }
+    return pshm;
+  }
+  else
+  {
+    ERROR_PRINT("Erreur de connexion de la memoire partagee : bad flag");
+    exit(1);
+  }
+  return NULL;
 }
 
 

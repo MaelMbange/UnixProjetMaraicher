@@ -41,18 +41,20 @@ int main()
   //*********************************************************
   // Recuperation de l'identifiant de la file de messages
   //*********************************************************
-  NORMAL_PRINT("(Publicite) Connexion a la file de message.");
+  NORMAL_PRINT("(Publicite) Recuperation de la file de message.");
   idQ = getMessageQueue(CLE);
 
   //*********************************************************
   // Recuperation de l'identifiant de la mémoire partagée
   //*********************************************************
-  NORMAL_PRINT("(Publicite) Connexion a la memoire partagee.");
+  NORMAL_PRINT("(Publicite) Recuperation de la memoire partagee.");
   idShm = getSharedMemory(CLE);
 
   //*********************************************************
   // Attachement a la mémoire partagée
   //*********************************************************
+  NORMAL_PRINT("(Publicite) Connexion a la memoire partagee.");
+  pShm = connectSharedMemory(idShm,"RW");
 
   // Attachement à la mémoire partagée
   //pShm = (char*)malloc(52); // a supprimer et remplacer par ce qu'il faut
