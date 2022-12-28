@@ -42,7 +42,7 @@ int main()
   sigaction(SIGINT,&sig,NULL);
 
   //********************************************************
-  //Creation de la file de message
+  // Creation de la file de message
   //********************************************************
   fprintf(stderr,"(SERVEUR %d) Creation de la file de messages\n",getpid());  
   idQ = createMessageQueue(CLE);
@@ -50,7 +50,7 @@ int main()
     exit(1);
 
   //********************************************************
-  //Creation de la memoire partagée
+  // Creation de la memoire partagée
   //********************************************************
   fprintf(stderr,"(SERVEUR) Creation de la memoire partagée\n");  
   idShm = createSharedMemory(CLE,sizeof(char)*52);
@@ -62,7 +62,9 @@ int main()
   // Creation du pipe
   // TO DO
 
+  //********************************************************
   // Initialisation du tableau de connexions
+  //********************************************************
   tab = (TAB_CONNEXIONS*) malloc(sizeof(TAB_CONNEXIONS)); 
 
   for (int i=0 ; i<6 ; i++)
@@ -74,10 +76,17 @@ int main()
   tab->pidServeur = getpid();
   tab->pidPublicite = 0;
 
-  afficheTab();
+  // afficheTab();
 
+  //********************************************************
   // Creation du processus Publicite (étape 2)
-  // TO DO
+  //********************************************************
+  fprintf(stderr,"(SERVEUR) Creation du processus Publicite\n");
+  if((tab->pidPublicite = fork()) == 0)
+  {
+    execl("./Publicite",NULL);
+    exit(0);
+  }
 
   // Creation du processus AccesBD (étape 4)
   // TO DO
