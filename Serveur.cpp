@@ -11,22 +11,20 @@
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
+#include <setjmp.h>
 #include "protocole.h" // contient la cle et la structure d'un message
 #include "FichierClient.h"
 
 int idQ,idShm,idSem;
 int fdPipe[2];
 TAB_CONNEXIONS *tab;
+sigjmp_buf back;
 
 void afficheTab();
 
 void handlerSIGINT(int);
-void handlerSIGINT(int sig)
-{
-  deleteMessageQueue(idQ);
-  deleteSharedMemory(idShm);
-  exit(0);
-}
+void handlerSIGCHLD(int);
+
 
 int main()
 {
@@ -41,6 +39,10 @@ int main()
   sig.sa_flags = 0;
   sigaction(SIGINT,&sig,NULL);
 
+  sig.sa_handler = handlerSIGCHLD;
+  sig.sa_flags = 0;
+  sigaction(SIGCHLD,&sig,NULL);
+
   //********************************************************
   // Creation de la file de message
   //********************************************************
@@ -53,7 +55,7 @@ int main()
   // Creation de la memoire partagée
   //********************************************************
   fprintf(stderr,"(SERVEUR) Creation de la memoire partagée\n");  
-  idShm = createSharedMemory(CLE,sizeof(char)*52);
+  idShm = createSharedMemory(CLE,sizeof(char)*51);
 
   //********************************************************
   //********************************************************
@@ -76,11 +78,15 @@ int main()
   tab->pidServeur = getpid();
   tab->pidPublicite = 0;
 
-  // afficheTab();
+  //afficheTab();
 
   //********************************************************
   // Creation du processus Publicite (étape 2)
   //********************************************************
+
+  char* connexion = connectSharedMemory(idShm,"RW");
+  sprintf(connexion,"Hello world!");
+
   fprintf(stderr,"(SERVEUR) Creation du processus Publicite\n");
   if((tab->pidPublicite = fork()) == 0)
   {
@@ -98,6 +104,8 @@ int main()
   fprintf(stderr,"\033[H\033[J");
   afficheTab();
 
+  sigsetjmp(back,1);
+
   while(1)
   {
     if(recieveMessageQueue(idQ,m,SERVEUR)==-1)
@@ -105,7 +113,7 @@ int main()
     
 
     clearMessage(reponse);
-    fprintf(stderr,"\033[H\033[J");
+    // fprintf(stderr,"\033[H\033[J");
     switch(m.requete)
     {
       case CONNECT :  // TO DO
@@ -172,6 +180,10 @@ int main()
                             if(i.pidFenetre == m.expediteur)
                             {
                               strcpy(i.nom,m.data2);
+                              if((i.pidCaddie = fork()) == 0)
+                              {
+                                execl("./Caddie",NULL);
+                              }
                               break;
                             }
                           }
@@ -196,6 +208,10 @@ int main()
                             if(i.pidFenetre == m.expediteur)
                             {
                               strcpy(i.nom,m.data2);
+                              if((i.pidCaddie = fork()) == 0)
+                              {
+                                execl("./Caddie",NULL);
+                              }
                               break;
                             }
                           }
@@ -218,6 +234,12 @@ int main()
                         if(i.pidFenetre == m.expediteur)
                         {
                           strcpy(i.nom,"");
+                          //**************************************
+                          // Tuer le pcs Caddie avec un message
+                          //**************************************
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,i.pidCaddie,SERVEUR,LOGOUT);
+                          sendMessageQueue(idQ,reponse);
                           break;
                         }
                       }
@@ -225,10 +247,29 @@ int main()
                       break;
 
       case UPDATE_PUB :  // TO DO
+
+                      for(const auto& i : tab->connexions)
+                      {
+                        if(i.pidFenetre != 0)
+                          kill(i.pidFenetre,SIGUSR2);
+                      }
                       break;
 
       case CONSULT :  // TO DO
                       fprintf(stderr,"(SERVEUR %d) Requete CONSULT reçue de %d\n",getpid(),m.expediteur);
+                      
+                      for(const auto& [pidF,nom,pidC] : tab->connexions)
+                      {
+                        if(pidF == m.expediteur)
+                        {
+                          makeMessageBasic(reponse,pidC,pidF,CONSULT);
+                          makeMessageData(reponse,m.data1);
+                          sendMessageQueue(idQ,reponse);
+
+                          break;
+                        }
+                      }
+                      
                       break;
 
       case ACHAT :    // TO DO
@@ -257,6 +298,30 @@ int main()
     }
     // system("clear");
     afficheTab();
+  }
+}
+
+
+void handlerSIGINT(int sig)
+{
+  deleteMessageQueue(idQ);
+  deleteSharedMemory(idShm);
+  exit(0);
+}
+void handlerSIGCHLD(int)
+{
+  pid_t pidCaddie = wait(NULL);
+  if(pidCaddie != -1)
+  {
+    for(auto& x: tab->connexions)
+    {
+      if(x.pidCaddie == pidCaddie)
+      {
+        x.pidCaddie = 0;
+        NORMAL_PRINT("RECEPTION SIGNAL SIGCHLD...");
+        siglongjmp(back,0);
+      }
+    }
   }
 }
 

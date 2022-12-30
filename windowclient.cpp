@@ -16,7 +16,7 @@ using namespace std;
 extern WindowClient *w;
 
 int idQ, idShm;
-bool logged;
+bool logged = false;
 char* pShm;
 ARTICLE articleEnCours;
 float totalCaddie = 0.0;
@@ -51,37 +51,35 @@ WindowClient::WindowClient(QWidget *parent) : QMainWindow(parent), ui(new Ui::Wi
     //********************************************************
     // Recuperation de l'identifiant de la file de messages
     //******************************************************** 
-
     idQ = getMessageQueue(CLE,"(CLIENT) ERREUR MSGGET.");
-    if(idQ == -1)
-    {
-      exit(1);
-    }
     
     //********************************************************
-    //********************************************************
-    //******************************************************** 
-
     // Recuperation de l'identifiant de la mémoire partagée
-    //fprintf(stderr,"(CLIENT %d) Recuperation de l'id de la mémoire partagée\n",getpid());
-    // TO DO
-
+    //******************************************************** 
+    idShm = getSharedMemory(CLE);
+    
+    //********************************************************
     // Attachement à la mémoire partagée
-    // TO DO
+    //******************************************************** 
+    pShm = connectSharedMemory(idShm);
 
+    //********************************************************
     // Armement des signaux
-    // TO DO
-    //SIGUSR1 RECEPETION CONNEXION
+    //******************************************************** 
     struct sigaction sig;
     sigemptyset(&sig.sa_mask);
     sig.sa_handler = handlerSIGUSR1;
     sig.sa_flags = 0;
     sigaction(SIGUSR1,&sig,NULL);
 
+    sigemptyset(&sig.sa_mask);
+    sig.sa_handler = handlerSIGUSR2;
+    sig.sa_flags = 0;
+    sigaction(SIGUSR2,&sig,NULL);
+
     //********************************************************
     //  Envoie d'un message de connexion au serveur
-    //******************************************************** 
-
+    //********************************************************
     MESSAGE msg;
     clearMessage(msg);
     makeMessageBasic(msg,SERVEUR,getpid(),CONNECT);
@@ -90,8 +88,7 @@ WindowClient::WindowClient(QWidget *parent) : QMainWindow(parent), ui(new Ui::Wi
     NORMAL_PRINT("MESSAGE ENVOYE");
 
     MESSAGE rep;
-    if(recieveMessageQueue(idQ,rep,getpid()) == -1)
-      exit(1);
+    recieveMessageQueue(idQ,rep,getpid());
 
     if(rep.data1 == 0)
     {
@@ -350,15 +347,17 @@ void WindowClient::closeEvent(QCloseEvent *event)
     NORMAL_PRINT("CLIC BOUTON QUITTER.");
 
     MESSAGE msg;
-    clearMessage(msg);
-    makeMessageBasic(msg,SERVEUR,getpid(),LOGOUT);
-    sendMessageQueue(idQ,msg);
+
+    if(logged)
+    {
+      clearMessage(msg);
+      makeMessageBasic(msg,SERVEUR,getpid(),LOGOUT);
+      sendMessageQueue(idQ,msg);
+    }
 
     clearMessage(msg);
-
     makeMessageBasic(msg,SERVEUR,getpid(),DECONNECT);
-    if(sendMessageQueue(idQ,msg) == -1)
-      exit(1);    
+    sendMessageQueue(idQ,msg);
 
   exit(0);
 }
@@ -395,6 +394,7 @@ void WindowClient::on_pushButtonLogout_clicked()
     sendMessageQueue(idQ,msg); 
 
     logoutOK();
+    logged = false;
    
 }
 
@@ -403,6 +403,12 @@ void WindowClient::on_pushButtonSuivant_clicked()
 {
     // TO DO (étape 3)
     // Envoi d'une requete CONSULT au serveur
+    MESSAGE rep;
+    clearMessage(rep);
+
+    makeMessageBasic(rep,SERVEUR,getpid(),CONSULT);
+    makeMessageData(rep,articleEnCours.id+1);
+    sendMessageQueue(idQ,rep);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -410,6 +416,12 @@ void WindowClient::on_pushButtonPrecedent_clicked()
 {
     // TO DO (étape 3)
     // Envoi d'une requete CONSULT au serveur
+    MESSAGE rep;
+    clearMessage(rep);
+
+    makeMessageBasic(rep,SERVEUR,getpid(),CONSULT);
+    makeMessageData(rep,articleEnCours.id-1);
+    sendMessageQueue(idQ,rep);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -471,6 +483,8 @@ void WindowClient::on_pushButtonPayer_clicked()
 void handlerSIGUSR1(int sig)
 {
     MESSAGE m;
+    MESSAGE rep;
+    clearMessage(rep);
   
     if (msgrcv(idQ,&m,sizeof(MESSAGE)-sizeof(long),getpid(),0) != -1)  // !!! a modifier en temps voulu !!!
     {
@@ -483,6 +497,12 @@ void handlerSIGUSR1(int sig)
                               w->dialogueMessage("Login","succeed!");
                               // setMotDePasse("");
                               w->loginOK();
+                              logged = true;
+
+                              makeMessageBasic(rep,SERVEUR,getpid(),CONSULT);
+                              makeMessageData(rep,1);
+                              sendMessageQueue(idQ,rep);
+
                               return;
                       case 2:
                               w->dialogueErreur("Login Failed!","Account does not exist!");
@@ -494,6 +514,7 @@ void handlerSIGUSR1(int sig)
                               w->dialogueMessage("Registration","Completed!");
                               // setMotDePasse("");
                               w->loginOK();
+                              logged = true;
                               return;
                       case 5:
                               w->dialogueErreur("Login Failed!","Account already exist!");
@@ -502,6 +523,16 @@ void handlerSIGUSR1(int sig)
                     break;
 
         case CONSULT : // TO DO (étape 3)
+                    // NORMAL_PRINT("RECU CONSULT");
+                    printMessage(m);
+                    articleEnCours.id = m.data1;
+                    strcpy(articleEnCours.intitule,m.data2);
+                    articleEnCours.stock = atoi(m.data3);
+                    strcpy(articleEnCours.image,m.data4);
+                    articleEnCours.prix = m.data5;
+
+                    w->setArticle(articleEnCours.intitule, articleEnCours.prix, articleEnCours.stock, articleEnCours.image);
+
                     break;
 
         case ACHAT : // TO DO (étape 5)
@@ -522,4 +553,8 @@ void handlerSIGUSR1(int sig)
     }
 }
 
+void handlerSIGUSR2(int sig)
+{
+  w->setPublicite(pShm);
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

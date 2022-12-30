@@ -56,18 +56,10 @@ int main()
   NORMAL_PRINT("(Publicite) Connexion a la memoire partagee.");
   pShm = connectSharedMemory(idShm,"RW");
 
-  // Attachement à la mémoire partagée
-  //pShm = (char*)malloc(52); // a supprimer et remplacer par ce qu'il faut
-  /*NORMAL_PRINT("(PUBLICITE) Connexion à la file de message...");
-  if((pShm = (char*)shmat(idShm,NULL,0)) == (char*)-1)
-  {
-    perror("(SERVEUR) Erreur de shmat");
-    exit(1);
-  }
-
   //Copier dans un (char[51]) le contenu de la memoire partagée
-  char Pub[51];
-  sprintf(Pub,"%51s","");
+  char Pub[51] = {0};
+  sprintf(Pub,"%50s","");
+  //fprintf(stderr,"ICI : %d\n",Pub[50]);
 
   /* sprintf(txt,"(PUBLICITE) CONTENU DE PUB(taille %d)=>",strlen(Pub));
   NORMAL_PRINT(txt);
@@ -79,46 +71,36 @@ int main()
 
   //for (int i=0 ; i<=50 ; i++) Pub[i] = ' ';
   //Pub[51] = '\0';
-  /*int ind = 25 - strlen(pShm)/2;
+  int ind = 25 - strlen(pShm)/2;
   for (int i=0 ; i<strlen(pShm) ; i++) Pub[ind + i] = pShm[i];// NORMAL_PRINT(Pub);
 
-  MESSAGE m;int isMsgSend;
-  m.type = 1;
-  m.expediteur = getpid();
-  m.requete = UPDATE_PUB;
+  MESSAGE m;
+
+  clearMessage(m);
+  makeMessageBasic(m,SERVEUR,getpid(),UPDATE_PUB);
 
   char left_char;
   while(1)
   {
     // Envoi d'une requete UPDATE_PUB au serveur
-     isMsgSend = msgsnd(idQ,&m,sizeof(MESSAGE)-sizeof(long),0);
-    if(isMsgSend == -1)
-    {
-      sprintf(txt,"(PUBLICITE) pid=%d : Message Update Failed...",getpid());
-      ERROR_PRINT(txt);
-      exit(1);
-    } 
+    sendMessageQueue(idQ,m);
 
     //sleep(1); 
     usleep(1'000'000);
 
     // Decallage vers la gauche
     left_char = Pub[0];
-    for (int j = 0; j < 50; j++)
+    for (int j = 0; j < 49; j++)
     {
       Pub[j] = Pub[j+1];
     }
-    Pub[50] = left_char;
-    Pub[51] = '\0';
+    Pub[49] = left_char;
+    Pub[50] = '\0';
 
     sprintf(pShm,"%s",Pub);
 
     // NORMAL_PRINT(Pub);
-    /* int j = 0;
-    for(auto& x: Pub)
-      fprintf(stderr,"%d=%d\n",j++,x);
-      usleep(1'000'000'000); */
-  // } 
+  } 
 
   return 0;
 }

@@ -36,21 +36,25 @@ int main(int argc,char* argv[])
   // Armement des signaux
   // TO DO
 
+  
+  //********************************************************
   // Recuperation de l'identifiant de la file de messages
+  //********************************************************
   fprintf(stderr,"(CADDIE %d) Recuperation de l'id de la file de messages\n",getpid());
-  if ((idQ = msgget(CLE,0)) == -1)
-  {
-    perror("(CADDIE) Erreur de msgget");
-    exit(1);
-  }
+  idQ = getMessageQueue(CLE);
 
+  
+  //********************************************************
   // Connexion à la base de donnée
+  //********************************************************
   connexion = mysql_init(NULL);
   if (mysql_real_connect(connexion,"localhost","Student","PassStudent1_","PourStudent",0,0,0) == NULL)
   {
     fprintf(stderr,"(SERVEUR) Erreur de connexion à la base de données...\n");
     exit(1);  
   }
+
+
 
 
   MESSAGE m;
@@ -62,7 +66,7 @@ int main(int argc,char* argv[])
   MYSQL_ROW  Tuple;
 
   // Récupération descripteur écriture du pipe
-  fdWpipe = atoi(argv[1]);
+  // fdWpipe = atoi(argv[1]);
 
   while(1)
   {
@@ -80,10 +84,39 @@ int main(int argc,char* argv[])
 
       case LOGOUT :   // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete LOGOUT reçue de %d\n",getpid(),m.expediteur);
+                      mysql_close(connexion);
+                      exit(0);
                       break;
 
       case CONSULT :  // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete CONSULT reçue de %d\n",getpid(),m.expediteur);
+                      
+                      sprintf(requete,"select * from  UNIX_FINAL;");
+                      if (mysql_query(connexion,requete) != 0)
+                      {
+                        fprintf(stderr, "Erreur de mysql_query: %s\n",mysql_error(connexion));
+                        exit(1);
+                      }
+
+                     if((resultat = mysql_store_result(connexion)) == NULL)
+                     {
+                       fprintf(stderr, "Erreur de mysql_store_result: %s\n",mysql_error(connexion));
+                       mysql_close(connexion);
+                       exit(1);
+                     }
+
+                      while((Tuple = mysql_fetch_row(resultat)) != NULL)
+                      {
+                        if(atoi(Tuple[0]) == m.data1)
+                        {
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,m.expediteur,getpid(),CONSULT);
+                          makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],Tuple[3],Tuple[4],atoi(Tuple[2]));
+                          printMessage(reponse);
+                          sendMessageQueue(idQ,reponse);
+                          kill(m.expediteur,SIGUSR1);
+                        } 
+                      } 
                       break;
 
       case ACHAT :    // TO DO

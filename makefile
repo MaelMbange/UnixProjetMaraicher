@@ -56,7 +56,7 @@ FichierClient.o:	FichierClient.cpp
 
 Serveur:	Serveur.cpp FichierClient.o
 		echo -e "\033[91mCreation Serveur...\033[0m"
-		g++ Serveur.cpp FichierClient.o -o Serveur -I/usr/include/mysql -m64 -L/usr/lib64/mysql -lmysqlclient -lpthread -lz -lm -lrt -lssl -lcrypto -ldl
+		g++ -std=c++2a Serveur.cpp FichierClient.o -o Serveur -I/usr/include/mysql -m64 -L/usr/lib64/mysql -lmysqlclient -lpthread -lz -lm -lrt -lssl -lcrypto -ldl
 
 
 clean:
