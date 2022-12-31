@@ -427,8 +427,17 @@ void WindowClient::on_pushButtonPrecedent_clicked()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void WindowClient::on_pushButtonAcheter_clicked()
 {
-    // TO DO (étape 5)
+    //(étape 5)
+    //*****************************************
     // Envoi d'une requete ACHAT au serveur
+    //*****************************************
+    NORMAL_PRINT("Clic sur boutton ACHETER");
+
+    MESSAGE m;
+    clearMessage(m);
+    makeMessageBasic(m,SERVEUR,getpid(),ACHAT);
+    makeMessageData(m,articleEnCours,NULL,NULL,NULL,getQuantite());
+    sendMessageQueue(idQ,m);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -515,6 +524,11 @@ void handlerSIGUSR1(int sig)
                               // setMotDePasse("");
                               w->loginOK();
                               logged = true;
+
+                              makeMessageBasic(rep,SERVEUR,getpid(),CONSULT);
+                              makeMessageData(rep,1);
+                              sendMessageQueue(idQ,rep);
+
                               return;
                       case 5:
                               w->dialogueErreur("Login Failed!","Account already exist!");

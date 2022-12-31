@@ -111,7 +111,7 @@ void clearMessage(MESSAGE& msg);
 void makeMessage(MESSAGE& msg, long type, int expediteur, int requete, int data1,const char* data2,const char* data3,const char* data4, float prix);
 void makeMessageBasic(MESSAGE& msg, long type, int expediteur, int requete);
 void makeMessageData(MESSAGE& msg,int data1 =0, const char* data2=NULL,const char* data3=NULL,const char* data4=NULL, float prix=0);
-void printMessage(MESSAGE& msg);
+void printMessage(MESSAGE& msg,bool red = false);
 
 int createMessageQueue(int Key, const char* msg)
 {
@@ -123,7 +123,6 @@ int createMessageQueue(int Key, const char* msg)
   }
   return msgfd;
 }
-
 int deleteMessageQueue(int msgfd,const char* msg)
 {
   int resultat = msgctl(msgfd, IPC_RMID,NULL);
@@ -134,7 +133,6 @@ int deleteMessageQueue(int msgfd,const char* msg)
   }
   return resultat;
 }
-
 int getMessageQueue(int Key, const char* msg)
 {
   int msgfd = msgget(Key,0);
@@ -145,7 +143,6 @@ int getMessageQueue(int Key, const char* msg)
   }
   return msgfd;
 }
-
 int sendMessageQueue(int msgfd, const MESSAGE message, const char* msg)
 {
   int send;
@@ -156,7 +153,6 @@ int sendMessageQueue(int msgfd, const MESSAGE message, const char* msg)
   }
   return send;
 }
-
 int recieveMessageQueue(int msgfd, MESSAGE& message, pid_t pid,const char* msg)
 {
   int send = msgrcv(msgfd,&message,sizeof(message)-sizeof(long),pid,0);
@@ -208,7 +204,7 @@ void makeMessageData(MESSAGE& msg,int data1 , const char* data2,const char* data
     strcpy(msg.data4,data4);
 }
 
-void printMessage(MESSAGE& msg)
+void printMessage(MESSAGE& msg,bool red)
 {
   char txt[300];
 
@@ -230,7 +226,10 @@ void printMessage(MESSAGE& msg)
           ,msg.data4
           ,msg.data5
           );
-  NORMAL_PRINT(txt);
+  if(!red)
+    NORMAL_PRINT(txt);
+  else
+    ERROR_PRINT(txt);
 }
 
 
@@ -307,34 +306,15 @@ char* connectSharedMemory(int shmfd,const char* flag,const char* msg)
 //****************************
 // PIPE
 //****************************
-void openPipe(int* vec,const char* msg = "Erreur ouverture du pipe.");
 void closePipe(int* vec,const char* msg = "Erreur fermeture du pipe.");
-void writePipe(int fd, MESSAGE m, const char* msg = "Erreur fermeture du pipe.");
 
-void openPipe(int* vec,const char* msg)
-{
-  if(pipe(vec) != 0 )
-  {
-    ERROR_PRINT(msg);
-    exit(1);
-  }
-}
 void closePipe(int* vec,const char* msg)
 {
-  if(close(vec[0]) == -1 || close(vec[1]) == -1)
+  if(close(vec[1]) == -1 || close(vec[0]) == -1)
   {
     ERROR_PRINT(msg);
     exit(1);
   }
 }
-void writePipe(int fd,MESSAGE m, const char* msg)
-{
-  if(write(fd,&m,sizeof(m)) != sizeof(m))
-  {
-    ERROR_PRINT(msg);
-    exit(1);
-  }
-}
-
 
 

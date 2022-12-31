@@ -24,12 +24,17 @@ void afficheTab();
 
 void handlerSIGINT(int);
 void handlerSIGCHLD(int);
+void exitfunc()
+{
+  handlerSIGINT(0);
+}
 
 
 int main()
 {
   MESSAGE m;
   MESSAGE reponse;
+  MESSAGE log;
   // Armement des signaux
   // TO DO
   struct sigaction sig;
@@ -57,11 +62,16 @@ int main()
   fprintf(stderr,"(SERVEUR) Creation de la memoire partagée\n");  
   idShm = createSharedMemory(CLE,sizeof(char)*51);
 
+  atexit(exitfunc);
+
   //********************************************************
   // Creation du pipe
   //********************************************************
-  openPipe(fdPipe);
- 
+  if(pipe(fdPipe)!= 0 )
+  {
+    ERROR_PRINT("Erreur ouverture pipe");
+    exit(1);
+  } 
 
   //********************************************************
   // Initialisation du tableau de connexions
@@ -89,7 +99,7 @@ int main()
   fprintf(stderr,"(SERVEUR) Creation du processus Publicite\n");
   if((tab->pidPublicite = fork()) == 0)
   {
-    execl("./Publicite",NULL);
+    execl("./Publicite","./Publicite",NULL);
     exit(0);
   }
   
@@ -98,12 +108,15 @@ int main()
   //********************************************************
   if((tab->pidAccesBD = fork()) == 0)
   {
-    execl("./AccesBD",fdPipe[0],NULL);
+    char entry[10];
+    sprintf(entry,"%d",fdPipe[0]);
+    execl("./AccesBD","./AccesBD",entry,NULL);
+    ERROR_PRINT("Fin AccesBD SEVREUR");
     exit(0);
   }
 
   //*****************************************
-  //SUPPRESSION DU FLUX STDOUT/STDERR
+  //  SUPPRESSION DU FLUX STDOUT/STDERR
   //*****************************************
 
   fprintf(stderr,"\033[H\033[J");
@@ -113,12 +126,12 @@ int main()
 
   while(1)
   {
-    if(recieveMessageQueue(idQ,m,SERVEUR)==-1)
+    if(recieveMessageQueue(idQ,m,SERVEUR,"Erreur rcv Serveur")==-1)
       exit(1);
     
 
     clearMessage(reponse);
-    // fprintf(stderr,"\033[H\033[J");
+    fprintf(stderr,"\033[H\033[J");
     switch(m.requete)
     {
       case CONNECT :  // TO DO
@@ -144,13 +157,13 @@ int main()
                       {
                         makeMessageBasic(reponse,m.expediteur,1,CONNECT);
                         makeMessageData(reponse,0);
-                        if(sendMessageQueue(idQ,reponse)==-1)
+                        if(sendMessageQueue(idQ,reponse,"(SERVEUR) CONNECT")==-1)
                           handlerSIGINT(0);
                         break;
                       }
                       makeMessageBasic(reponse,m.expediteur,1,CONNECT);
                       makeMessageData(reponse,1);
-                      if(sendMessageQueue(idQ,reponse)==-1)
+                      if(sendMessageQueue(idQ,reponse,"(SERVEUR) CONNECT")==-1)
                         handlerSIGINT(0);
                       
                       break;
@@ -187,7 +200,9 @@ int main()
                               strcpy(i.nom,m.data2);
                               if((i.pidCaddie = fork()) == 0)
                               {
-                                execl("./Caddie",fdPipe[1],NULL);
+                                char entry[10];
+                                sprintf(entry,"%d",fdPipe[1]);
+                                execl("./Caddie","./Caddie",entry,NULL);
                               }
                               break;
                             }
@@ -215,7 +230,9 @@ int main()
                               strcpy(i.nom,m.data2);
                               if((i.pidCaddie = fork()) == 0)
                               {
-                                execl("./Caddie",fdPipe[1],NULL);
+                                char entry[10];
+                                sprintf(entry,"%d",fdPipe[1]);
+                                execl("./Caddie","./Caddie",entry,NULL);
                               }
                               break;
                             }
@@ -227,9 +244,20 @@ int main()
                         }
                       }
 
+                      for(const auto& i : tab->connexions)
+                      {
+                        if(i.pidFenetre == m.expediteur)
+                        {
+                          clearMessage(log);
+                          makeMessageBasic(log,i.pidCaddie,m.expediteur,LOGIN);
+                          sendMessageQueue(idQ,log);
+                          break;
+                        }
+                      } 
+
                       makeMessageBasic(reponse,m.expediteur,SERVEUR,LOGIN);
-                      sendMessageQueue(idQ,reponse);      
-                      kill(m.expediteur,SIGUSR1);                
+                      sendMessageQueue(idQ,reponse,"(SERVEUR) LOGIN");     
+                      kill(m.expediteur,SIGUSR1);                                  
 
                       break; 
 
@@ -244,7 +272,7 @@ int main()
                           //**************************************
                           clearMessage(reponse);
                           makeMessageBasic(reponse,i.pidCaddie,SERVEUR,LOGOUT);
-                          sendMessageQueue(idQ,reponse);
+                          sendMessageQueue(idQ,reponse,"(SERVEUR) LOGOUT");
                           break;
                         }
                       }
@@ -269,7 +297,7 @@ int main()
                         {
                           makeMessageBasic(reponse,pidC,pidF,CONSULT);
                           makeMessageData(reponse,m.data1);
-                          sendMessageQueue(idQ,reponse);
+                          sendMessageQueue(idQ,reponse,"(SERVEUR) CONSULT");
 
                           break;
                         }
@@ -309,14 +337,25 @@ int main()
 
 void handlerSIGINT(int sig)
 {
+  if(tab->pidAccesBD != 0)
+  {
+    MESSAGE m;
+    clearMessage(m);
+    makeMessageBasic(m,tab->pidAccesBD,SERVEUR,DECONNECT);
+    write(fdPipe[1],&m,sizeof(m));
+  }
+
   deleteMessageQueue(idQ);
   deleteSharedMemory(idShm);
   closePipe(fdPipe);
+
+
   exit(0);
 }
 void handlerSIGCHLD(int)
 {
   pid_t pidCaddie = wait(NULL);
+  fprintf(stderr,"(SERVEUR) Recuperation du fils %d\n",pidCaddie);
   if(pidCaddie != -1)
   {
     for(auto& x: tab->connexions)

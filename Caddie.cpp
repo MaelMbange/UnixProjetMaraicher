@@ -125,11 +125,25 @@ int main(int argc,char* argv[])
                         } 
                       }  */
                       m.expediteur = getpid();
+                      m.type       = 1;  
 
-                      writePipe(fdWpipe,m);
+                      // NORMAL_PRINT("(CADDIE) Ecriture sur le pipe.");
+                      write(fdWpipe,&m,sizeof(m));
 
-                      recieveMessageQueue(idQ,reponse,getpid());
+                      // NORMAL_PRINT("(CADDIE) Attente reception message.");
+                      recieveMessageQueue(idQ,reponse,getpid(),"(Caddie) Erreur rcv : L31");
 
+                      // NORMAL_PRINT("(CADDIE) Reception du message de ACCESBD");
+                      if(reponse.data1 != -1)
+                      {
+                        reponse.type = pidClient;
+                        reponse.expediteur = getpid();
+                        // NORMAL_PRINT("(CADDIE) Envoie message vers client");
+                        sendMessageQueue(idQ,reponse,"(CADDIE) Erreur envoie message");
+                        // printMessage(reponse);
+                        kill(pidClient,SIGUSR1);
+                      }
+                      // NORMAL_PRINT("(CADDIE) fin consult");
                       break;
 
       case ACHAT :    // TO DO

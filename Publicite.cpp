@@ -83,7 +83,7 @@ int main()
   while(1)
   {
     // Envoi d'une requete UPDATE_PUB au serveur
-    sendMessageQueue(idQ,m);
+    sendMessageQueue(idQ,m,"(PUBLICITE) SEND");
 
     //sleep(1); 
     usleep(1'000'000);
