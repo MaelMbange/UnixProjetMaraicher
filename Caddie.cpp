@@ -47,14 +47,19 @@ int main(int argc,char* argv[])
   //********************************************************
   // Connexion à la base de donnée
   //********************************************************
-  connexion = mysql_init(NULL);
-  if (mysql_real_connect(connexion,"localhost","Student","PassStudent1_","PourStudent",0,0,0) == NULL)
-  {
-    fprintf(stderr,"(SERVEUR) Erreur de connexion à la base de données...\n");
-    exit(1);  
-  }
+  // connexion = mysql_init(NULL);
+  // if (mysql_real_connect(connexion,"localhost","Student","PassStudent1_","PourStudent",0,0,0) == NULL)
+  // {
+  //   fprintf(stderr,"(SERVEUR) Erreur de connexion à la base de données...\n");
+  //   exit(1);  
+  // }
 
 
+
+  //********************************************************
+  // Récupération descripteur écriture du pipe
+  //********************************************************
+  fdWpipe = atoi(argv[1]);
 
 
   MESSAGE m;
@@ -65,8 +70,9 @@ int main(int argc,char* argv[])
   MYSQL_RES  *resultat;
   MYSQL_ROW  Tuple;
 
-  // Récupération descripteur écriture du pipe
-  // fdWpipe = atoi(argv[1]);
+  //********************************************************
+  // Debut du pc
+  //********************************************************
 
   while(1)
   {
@@ -80,18 +86,19 @@ int main(int argc,char* argv[])
     {
       case LOGIN :    // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete LOGIN reçue de %d\n",getpid(),m.expediteur);
+                      pidClient = m.expediteur;
                       break;
 
       case LOGOUT :   // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete LOGOUT reçue de %d\n",getpid(),m.expediteur);
-                      mysql_close(connexion);
+                      // mysql_close(connexion);
                       exit(0);
                       break;
 
       case CONSULT :  // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete CONSULT reçue de %d\n",getpid(),m.expediteur);
                       
-                      sprintf(requete,"select * from  UNIX_FINAL;");
+                    /*   sprintf(requete,"select * from  UNIX_FINAL;");
                       if (mysql_query(connexion,requete) != 0)
                       {
                         fprintf(stderr, "Erreur de mysql_query: %s\n",mysql_error(connexion));
@@ -116,7 +123,13 @@ int main(int argc,char* argv[])
                           sendMessageQueue(idQ,reponse);
                           kill(m.expediteur,SIGUSR1);
                         } 
-                      } 
+                      }  */
+                      m.expediteur = getpid();
+
+                      writePipe(fdWpipe,m);
+
+                      recieveMessageQueue(idQ,reponse,getpid());
+
                       break;
 
       case ACHAT :    // TO DO

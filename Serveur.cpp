@@ -58,11 +58,10 @@ int main()
   idShm = createSharedMemory(CLE,sizeof(char)*51);
 
   //********************************************************
-  //********************************************************
-  //********************************************************
-
   // Creation du pipe
-  // TO DO
+  //********************************************************
+  openPipe(fdPipe);
+ 
 
   //********************************************************
   // Initialisation du tableau de connexions
@@ -93,9 +92,15 @@ int main()
     execl("./Publicite",NULL);
     exit(0);
   }
-
+  
+  //********************************************************
   // Creation du processus AccesBD (étape 4)
-  // TO DO
+  //********************************************************
+  if((tab->pidAccesBD = fork()) == 0)
+  {
+    execl("./AccesBD",fdPipe[0],NULL);
+    exit(0);
+  }
 
   //*****************************************
   //SUPPRESSION DU FLUX STDOUT/STDERR
@@ -182,7 +187,7 @@ int main()
                               strcpy(i.nom,m.data2);
                               if((i.pidCaddie = fork()) == 0)
                               {
-                                execl("./Caddie",NULL);
+                                execl("./Caddie",fdPipe[1],NULL);
                               }
                               break;
                             }
@@ -210,7 +215,7 @@ int main()
                               strcpy(i.nom,m.data2);
                               if((i.pidCaddie = fork()) == 0)
                               {
-                                execl("./Caddie",NULL);
+                                execl("./Caddie",fdPipe[1],NULL);
                               }
                               break;
                             }
@@ -306,6 +311,7 @@ void handlerSIGINT(int sig)
 {
   deleteMessageQueue(idQ);
   deleteSharedMemory(idShm);
+  closePipe(fdPipe);
   exit(0);
 }
 void handlerSIGCHLD(int)

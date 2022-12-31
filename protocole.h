@@ -304,4 +304,37 @@ char* connectSharedMemory(int shmfd,const char* flag,const char* msg)
   return NULL;
 }
 
+//****************************
+// PIPE
+//****************************
+void openPipe(int* vec,const char* msg = "Erreur ouverture du pipe.");
+void closePipe(int* vec,const char* msg = "Erreur fermeture du pipe.");
+void writePipe(int fd, MESSAGE m, const char* msg = "Erreur fermeture du pipe.");
+
+void openPipe(int* vec,const char* msg)
+{
+  if(pipe(vec) != 0 )
+  {
+    ERROR_PRINT(msg);
+    exit(1);
+  }
+}
+void closePipe(int* vec,const char* msg)
+{
+  if(close(vec[0]) == -1 || close(vec[1]) == -1)
+  {
+    ERROR_PRINT(msg);
+    exit(1);
+  }
+}
+void writePipe(int fd,MESSAGE m, const char* msg)
+{
+  if(write(fd,&m,sizeof(m)) != sizeof(m))
+  {
+    ERROR_PRINT(msg);
+    exit(1);
+  }
+}
+
+
 
