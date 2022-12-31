@@ -555,6 +555,12 @@ void handlerSIGUSR1(int sig)
                     break;
 
         case ACHAT : // TO DO (étape 5)
+                    char txt[100];
+                    if(strcmp(m.data3,"0") == 0)
+                      sprintf(txt," Stock insuffisant !");
+                    else
+                      sprintf(txt,"%s unite(s) de %s achetes avec succes!",m.data3,m.data2);
+                    w->dialogueMessage("ACHAT",txt);
                     break;
 
          case CADDIE : // TO DO (étape 5)
