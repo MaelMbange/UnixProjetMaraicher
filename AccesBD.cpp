@@ -73,25 +73,26 @@ int main(int argc,char* argv[])
     // ERROR_PRINT("(ACCESBD) print MESSAGE.");
     // printMessage(m,true);
 
+    sprintf(requete,"select * from  UNIX_FINAL;");
+    if (mysql_query(connexion,requete) != 0)
+    {
+      fprintf(stderr, "Erreur de mysql_query: %s\n",mysql_error(connexion));
+      exit(1);
+    }
+
+    if((resultat = mysql_store_result(connexion)) == NULL)
+    {
+      fprintf(stderr, "Erreur de mysql_store_result: %s\n",mysql_error(connexion));
+      mysql_close(connexion);
+      exit(1);
+    }
+
     switch(m.requete)
     {
       case CONSULT :  // TO DO
                       // Acces BD
                       fprintf(stderr,"(ACCESBD %d) Requete CONSULT reçue de %d\n",getpid(),m.expediteur);
-                      
-                      sprintf(requete,"select * from  UNIX_FINAL;");
-                      if (mysql_query(connexion,requete) != 0)
-                      {
-                        fprintf(stderr, "Erreur de mysql_query: %s\n",mysql_error(connexion));
-                        exit(1);
-                      }
-
-                     if((resultat = mysql_store_result(connexion)) == NULL)
-                     {
-                       fprintf(stderr, "Erreur de mysql_store_result: %s\n",mysql_error(connexion));
-                       mysql_close(connexion);
-                       exit(1);
-                     }
+                                            
                       found = false;
                       while((Tuple = mysql_fetch_row(resultat)) != NULL)
                       {
@@ -127,6 +128,43 @@ int main(int argc,char* argv[])
       case ACHAT :    // TO DO
                       fprintf(stderr,"(ACCESBD %d) Requete ACHAT reçue de %d\n",getpid(),m.expediteur);
                       // Acces BD
+                      // printMessage(m);
+
+                      while((Tuple = mysql_fetch_row(resultat)) != NULL)
+                      {
+                        fprintf(stderr, "NO ID = %d\n",atoi(Tuple[0])); 
+                        if(atoi(Tuple[0]) == m.data1)
+                        {
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,m.expediteur,getpid(),ACHAT);
+
+                          if(atoi(Tuple[3]) >= atoi(m.data3) && atoi(m.data3) > 0)
+                          {
+                            NORMAL_PRINT("(ACCESBD) ASSEZ DE STOCK.");
+                            int sub;
+                            sub = (atoi(Tuple[3])-atoi(m.data3));
+                            sprintf(requete,"UPDATE UNIX_FINAL SET stock = %d " 
+                                            "WHERE id = %d;"
+                                            ,sub,m.data1);
+
+                            if (mysql_query(connexion,requete) != 0)
+                            {
+                              fprintf(stderr, "Erreur de mysql_query: %s\n",mysql_error(connexion));
+                              exit(1);
+                            }
+                            // sprintf(reponse.data3,"%d",m.data3);
+                            makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],m.data3,Tuple[4],atoi(Tuple[2]));
+                          }
+                          else
+                          {
+                            //Pas assez d'element de stock
+                            makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],"0",Tuple[4],atoi(Tuple[2]));
+                          }
+                          printMessage(reponse);
+                          sendMessageQueue(idQ,reponse);
+                          break;
+                        } 
+                      }
 
                       // Finalisation et envoi de la reponse
                       break;

@@ -149,11 +149,22 @@ int main(int argc,char* argv[])
       case ACHAT :    // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete ACHAT reçue de %d\n",getpid(),m.expediteur);
 
+                      //********************************************************
                       // on transfert la requete à AccesBD
-                      
+                      //********************************************************
+                      m.expediteur = getpid();
+                      printMessage(m,true);
+
+                      write(fdWpipe,&m,sizeof(m));
+
                       // on attend la réponse venant de AccesBD
-                        
+                      clearMessage(reponse);
+                      recieveMessageQueue(idQ,reponse,getpid(),"(Caddie) erreur message recu L159");
+                                              
                       // Envoi de la reponse au client
+                      reponse.type = pidClient;
+                      reponse.expediteur = getpid();
+                      sendMessageQueue(idQ,reponse);
 
                       break;
 

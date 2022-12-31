@@ -131,7 +131,7 @@ int main()
     
 
     clearMessage(reponse);
-    fprintf(stderr,"\033[H\033[J");
+    // fprintf(stderr,"\033[H\033[J");
     switch(m.requete)
     {
       case CONNECT :  // TO DO
@@ -307,6 +307,17 @@ int main()
 
       case ACHAT :    // TO DO
                       fprintf(stderr,"(SERVEUR %d) Requete ACHAT reçue de %d\n",getpid(),m.expediteur);
+                      for(const auto& [pidF,nom,pidC] : tab->connexions)
+                      {
+                        if(pidF == m.expediteur)
+                        {
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,pidC,m.expediteur,ACHAT);
+                          makeMessageData(reponse,m.data1,m.data2,m.data3,m.data4,m.data5);
+                          sendMessageQueue(idQ,reponse);
+                          break;
+                        }
+                      }
                       break;
 
       case CADDIE :   // TO DO

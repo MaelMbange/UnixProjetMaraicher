@@ -103,7 +103,8 @@ WindowClient::WindowClient(QWidget *parent) : QMainWindow(parent), ui(new Ui::Wi
     //********************************************************
     //******************************************************** 
 
-    
+    setNom("mael");
+    setMotDePasse("12345");
     // Exemples à supprimer
     /* setPublicite("Promotions sur les concombres !!!");
     setArticle("pommes",5.53,18,"pommes.jpg");
@@ -435,9 +436,13 @@ void WindowClient::on_pushButtonAcheter_clicked()
 
     MESSAGE m;
     clearMessage(m);
+
     makeMessageBasic(m,SERVEUR,getpid(),ACHAT);
-    makeMessageData(m,articleEnCours,NULL,NULL,NULL,getQuantite());
+    m.data1 = articleEnCours.id;
+    sprintf(m.data3,"%d",getQuantite());
     sendMessageQueue(idQ,m);
+
+    fprintf(stderr,"ID = %d\nQuantitee = %d\n",articleEnCours.id,getQuantite());
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
