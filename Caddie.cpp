@@ -165,6 +165,7 @@ int main(int argc,char* argv[])
                       reponse.type = pidClient;
                       reponse.expediteur = getpid();
                       sendMessageQueue(idQ,reponse);
+                      kill(pidClient,SIGUSR1);
 
                       break;
 

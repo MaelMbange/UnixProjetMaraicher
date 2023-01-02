@@ -559,7 +559,7 @@ void handlerSIGUSR1(int sig)
                     if(strcmp(m.data3,"0") == 0)
                       sprintf(txt," Stock insuffisant !");
                     else
-                      sprintf(txt,"%s unite(s) de %s achetes avec succes!",m.data3,m.data2);
+                      sprintf(txt,"%s unité(s) de %s acheté(s) avec succes!",m.data3,m.data2);
                     w->dialogueMessage("ACHAT",txt);
                     break;
 
