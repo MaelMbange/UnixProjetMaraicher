@@ -542,7 +542,7 @@ void handlerSIGUSR1(int sig)
     MESSAGE rep;
     clearMessage(rep);
   
-    if (msgrcv(idQ,&m,sizeof(MESSAGE)-sizeof(long),getpid(),0) != -1)  // !!! a modifier en temps voulu !!!
+    while (msgrcv(idQ,&m,sizeof(MESSAGE)-sizeof(long),getpid(),IPC_NOWAIT) != -1)  // !!! a modifier en temps voulu !!!
     {
       switch(m.requete)
       {

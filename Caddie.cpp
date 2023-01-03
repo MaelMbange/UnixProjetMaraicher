@@ -229,7 +229,7 @@ int main(int argc,char* argv[])
                           sendMessageQueue(idQ,reponse);
                           kill(pidClient,SIGUSR1); 
                           printMessage(reponse); 
-                          usleep(10'000);
+                          // usleep(10'000);
                         }                      
                       }
 

@@ -131,7 +131,7 @@ int main()
     
 
     clearMessage(reponse);
-    // fprintf(stderr,"\033[H\033[J");
+    fprintf(stderr,"\033[H\033[J");
     switch(m.requete)
     {
       case CONNECT :  // TO DO
