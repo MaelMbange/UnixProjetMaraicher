@@ -322,6 +322,16 @@ int main()
 
       case CADDIE :   // TO DO
                       fprintf(stderr,"(SERVEUR %d) Requete CADDIE reçue de %d\n",getpid(),m.expediteur);
+                      for(const auto& [pidF,nom,pidC] : tab->connexions)
+                      {
+                        if(pidF == m.expediteur)
+                        {
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,pidC,m.expediteur,CADDIE);
+                          sendMessageQueue(idQ,reponse);
+                          break;
+                        }
+                      }
                       break;
 
       case CANCEL :   // TO DO

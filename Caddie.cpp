@@ -16,7 +16,7 @@
 
 int idQ;
 
-ARTICLE articles[10];
+ARTICLE articles[10] = {0};
 int nbArticles = 0;
 
 int fdWpipe;
@@ -162,6 +162,24 @@ int main(int argc,char* argv[])
                       recieveMessageQueue(idQ,reponse,getpid(),"(Caddie) erreur message recu L159");
                                               
                       // Envoi de la reponse au client
+                      if(strcmp(reponse.data3,"0") != 0)
+                      {
+
+                        for(auto& i : articles)
+                        {
+                          if(i.id == 0)
+                          {
+                            i.id = reponse.data1;
+                            strncpy(i.intitule,reponse.data2,20);
+                            i.stock = atoi(reponse.data3);
+                            strncpy(i.image,reponse.data4,20);
+                            i.prix = reponse.data5;
+                            ++nbArticles;
+                            break;
+                          }
+                        }
+                      }
+                      
                       reponse.type = pidClient;
                       reponse.expediteur = getpid();
                       sendMessageQueue(idQ,reponse);
@@ -171,6 +189,28 @@ int main(int argc,char* argv[])
 
       case CADDIE :   // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete CADDIE reçue de %d\n",getpid(),m.expediteur);
+                      
+                      for(const auto& i : articles)
+                      {
+                        if(i.id != 0)
+                        {
+                          NORMAL_PRINT("ENVOIE REQUETE CADDIE");
+                          char stock[20];
+                          sprintf(stock,"%d",i.stock);
+                          clearMessage(reponse);
+                          makeMessage(reponse,pidClient,getpid(),CADDIE,
+                                      i.id,
+                                      i.intitule,
+                                      stock,
+                                      i.image,
+                                      i.prix);
+                          sendMessageQueue(idQ,reponse);
+                          kill(pidClient,SIGUSR1); 
+                          printMessage(reponse); 
+                          usleep(100'000);
+                        }                      
+                      }
+
                       break;
 
       case CANCEL :   // TO DO

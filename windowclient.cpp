@@ -543,6 +543,7 @@ void handlerSIGUSR1(int sig)
 
         case CONSULT : // TO DO (étape 3)
                     // NORMAL_PRINT("RECU CONSULT");
+                    NORMAL_PRINT("MESSAGE CONSULT RECU");
                     printMessage(m);
                     articleEnCours.id = m.data1;
                     strcpy(articleEnCours.intitule,m.data2);
@@ -555,15 +556,28 @@ void handlerSIGUSR1(int sig)
                     break;
 
         case ACHAT : // TO DO (étape 5)
+                    NORMAL_PRINT("MESSAGE ACHAT RECU");
                     char txt[100];
                     if(strcmp(m.data3,"0") == 0)
                       sprintf(txt," Stock insuffisant !");
                     else
                       sprintf(txt,"%s unité(s) de %s acheté(s) avec succes!",m.data3,m.data2);
                     w->dialogueMessage("ACHAT",txt);
+
+                    clearMessage(rep);
+                    makeMessageBasic(rep,SERVEUR,getpid(),CADDIE);
+                    sendMessageQueue(idQ,rep);
+
+                    w->videTablePanier();
+                    totalCaddie = 0;
                     break;
 
          case CADDIE : // TO DO (étape 5)
+                    NORMAL_PRINT("MESSAGE CADDIE RECU");
+                    printMessage(m);
+                    w->ajouteArticleTablePanier(m.data2,m.data5,atoi(m.data3));
+                    totalCaddie += m.data5 * atoi(m.data3);
+                    w->setTotal(totalCaddie);
                     break;
 
          case TIME_OUT : // TO DO (étape 6)
