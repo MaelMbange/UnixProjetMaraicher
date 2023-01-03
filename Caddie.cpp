@@ -88,7 +88,7 @@ int main(int argc,char* argv[])
     // Mise en place du timer
     //****************************
     ERROR_PRINT("DEBUT ALARM");
-    alarm(10);
+    alarm(60);
 
     if (msgrcv(idQ,&m,sizeof(MESSAGE)-sizeof(long),getpid(),0) == -1)
     {
