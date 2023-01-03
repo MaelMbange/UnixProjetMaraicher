@@ -244,10 +244,16 @@ int main(int argc,char* argv[])
                       reponse.data1 = articles[m.data1].id;
                       sprintf(reponse.data3,"%d",articles[m.data1].stock);
                       write(fdWpipe,&reponse,sizeof(reponse));
-
                       clearMessage(reponse);
 
                       articles[m.data1] = {0};
+
+                      for (size_t i = m.data1; i < 9; i++)
+                      {
+                        articles[i] = articles[i+1];
+                      }
+                      articles[9] = {0};
+                      
                       nbArticles--;
                       // Suppression de l'aricle du panier
                       break;
