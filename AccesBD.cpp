@@ -172,8 +172,25 @@ int main(int argc,char* argv[])
       case CANCEL :   // TO DO
                       fprintf(stderr,"(ACCESBD %d) Requete CANCEL reçue de %d\n",getpid(),m.expediteur);
                       // Acces BD
+                      while((Tuple = mysql_fetch_row(resultat)) != NULL)
+                      {
+                        fprintf(stderr, "NO ID = %d\n",atoi(Tuple[0])); 
+                        if(atoi(Tuple[0]) == m.data1)
+                        {
+                          int stock;
+                          stock = atoi(Tuple[3]) + atoi(m.data3);
+                          sprintf(requete,"UPDATE UNIX_FINAL SET stock = %d " 
+                                          "WHERE id = %d;"
+                                          ,stock,m.data1);
 
-                      // Mise à jour du stock en BD
+                          // Mise à jour du stock en BD
+                          if (mysql_query(connexion,requete) != 0)
+                          {
+                            fprintf(stderr, "Erreur de mysql_query: %s\n",mysql_error(connexion));
+                            exit(1);
+                          }
+                        }
+                      }
                       break;
 
       case DECONNECT:
