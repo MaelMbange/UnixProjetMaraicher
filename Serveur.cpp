@@ -351,10 +351,30 @@ int main()
 
       case CANCEL_ALL : // TO DO
                       fprintf(stderr,"(SERVEUR %d) Requete CANCEL_ALL reçue de %d\n",getpid(),m.expediteur);
+                      for(const auto& [pidF,nom,pidC] : tab->connexions)
+                      {
+                        if(pidF == m.expediteur)
+                        {
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,pidC,m.expediteur,CANCEL_ALL);
+                          sendMessageQueue(idQ,reponse);
+                          break;
+                        }
+                      }
                       break;
 
       case PAYER : // TO DO
                       fprintf(stderr,"(SERVEUR %d) Requete PAYER reçue de %d\n",getpid(),m.expediteur);
+                      for(const auto& [pidF,nom,pidC] : tab->connexions)
+                      {
+                        if(pidF == m.expediteur)
+                        {
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,pidC,m.expediteur,PAYER);
+                          sendMessageQueue(idQ,reponse);
+                          break;
+                        }
+                      }
                       break;
 
       case NEW_PUB :  // TO DO

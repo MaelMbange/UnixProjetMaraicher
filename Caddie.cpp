@@ -237,16 +237,33 @@ int main(int argc,char* argv[])
 
       case CANCEL_ALL : // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete CANCEL_ALL reçue de %d\n",getpid(),m.expediteur);
-
                       // On envoie a AccesBD autant de requeres CANCEL qu'il y a d'articles dans le panier
-
-                      // On vide le panier
+                                            
+                      for(auto& i : articles)
+                      {
+                        if(i.id != 0)
+                        {
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,getpid(),getpid(),CANCEL);
+                          reponse.data1 = i.id;
+                          sprintf(reponse.data3,"%d",i.stock);
+                          write(fdWpipe,&reponse,sizeof(reponse));
+                          // On vide le panier
+                          i = {0};
+                        }
+                      }                      
+                      nbArticles = 0;
                       break;
 
       case PAYER :    // TO DO
                       fprintf(stderr,"(CADDIE %d) Requete PAYER reçue de %d\n",getpid(),m.expediteur);
 
                       // On vide le panier
+                      for(auto& i : articles)
+                      {
+                        i = {0};
+                      }
+                      nbArticles = 0;
                       break;
     }
   }

@@ -463,6 +463,7 @@ void WindowClient::on_pushButtonSupprimer_clicked()
 
     w->videTablePanier();
     totalCaddie = 0.0;
+    w->setTotal(totalCaddie);
 
     fprintf(stderr,"VALEUR INDICE %d\n",articleSelectionne);
 
@@ -483,13 +484,20 @@ void WindowClient::on_pushButtonViderPanier_clicked()
 {
     // TO DO (étape 6)
     // Envoi d'une requete CANCEL_ALL au serveur
+    MESSAGE m;
+    clearMessage(m);
+    makeMessageBasic(m,SERVEUR,getpid(),CANCEL_ALL);
+    sendMessageQueue(idQ,m);
 
     // Mise à jour du caddie
     w->videTablePanier();
     totalCaddie = 0.0;
-    w->setTotal(-1.0);
+    w->setTotal(totalCaddie);
 
     // Envoi requete CADDIE au serveur
+    clearMessage(m);
+    makeMessageBasic(m,SERVEUR,getpid(),CADDIE);
+    sendMessageQueue(idQ,m);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -497,17 +505,24 @@ void WindowClient::on_pushButtonPayer_clicked()
 {
     // TO DO (étape 7)
     // Envoi d'une requete PAYER au serveur
+    MESSAGE m;
+    clearMessage(m);
+    makeMessageBasic(m,SERVEUR,getpid(),PAYER);
+    sendMessageQueue(idQ,m);
 
     char tmp[100];
-    sprintf(tmp,"Merci pour votre paiement de %.2f ! Votre commande sera livrée tout prochainement.",totalCaddie);
+    sprintf(tmp,"Merci pour votre paiement de %.2f€! Votre commande sera livrée tout prochainement.",totalCaddie);
     dialogueMessage("Payer...",tmp);
 
     // Mise à jour du caddie
     w->videTablePanier();
     totalCaddie = 0.0;
-    w->setTotal(-1.0);
+    w->setTotal(totalCaddie);
 
     // Envoi requete CADDIE au serveur
+    clearMessage(m);
+    makeMessageBasic(m,SERVEUR,getpid(),CADDIE);
+    sendMessageQueue(idQ,m);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
