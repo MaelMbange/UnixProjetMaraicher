@@ -27,6 +27,7 @@ char print_msg[100];
 
 void handlerSIGUSR1(int sig);
 void handlerSIGUSR2(int sig);
+void handlerSIGINT(int sig);
 
 #define REPERTOIRE_IMAGES "images/"
 
@@ -76,6 +77,11 @@ WindowClient::WindowClient(QWidget *parent) : QMainWindow(parent), ui(new Ui::Wi
     sig.sa_handler = handlerSIGUSR2;
     sig.sa_flags = 0;
     sigaction(SIGUSR2,&sig,NULL);
+
+    sigemptyset(&sig.sa_mask);
+    sig.sa_handler = handlerSIGINT;
+    sig.sa_flags = 0;
+    sigaction(SIGINT,&sig,NULL);
 
     //********************************************************
     //  Envoie d'un message de connexion au serveur
@@ -347,10 +353,12 @@ void WindowClient::closeEvent(QCloseEvent *event)
   // Envoi d'une requete de deconnexion au serveur
     NORMAL_PRINT("CLIC BOUTON QUITTER.");
 
+
     MESSAGE msg;
 
     if(logged)
     {
+      w->on_pushButtonViderPanier_clicked();
       clearMessage(msg);
       makeMessageBasic(msg,SERVEUR,getpid(),LOGOUT);
       sendMessageQueue(idQ,msg);
@@ -615,6 +623,14 @@ void handlerSIGUSR1(int sig)
                     break;
 
          case TIME_OUT : // TO DO (étape 6)
+                    w->logoutOK();
+                    w->dialogueErreur("TIME OUT","Déconnecté pour cause d’inactivité!");
+                    logged = false;
+                    MESSAGE msg;
+                    clearMessage(msg);
+                    makeMessageBasic(msg,SERVEUR,getpid(),LOGOUT);
+                    sendMessageQueue(idQ,msg);
+
                     break;
 
          case BUSY : // TO DO (étape 7)
@@ -629,5 +645,10 @@ void handlerSIGUSR1(int sig)
 void handlerSIGUSR2(int sig)
 {
   w->setPublicite(pShm);
+}
+void handlerSIGINT(int sig)
+{
+  w->closeEvent(NULL);
+  exit(0);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

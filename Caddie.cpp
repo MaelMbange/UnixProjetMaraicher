@@ -30,11 +30,17 @@ int main(int argc,char* argv[])
 {
   // Masquage de SIGINT
   sigset_t mask;
+  sigemptyset(&mask);
   sigaddset(&mask,SIGINT);
   sigprocmask(SIG_SETMASK,&mask,NULL);
 
   // Armement des signaux
   // TO DO
+  struct sigaction sig;
+  sigemptyset(&sig.sa_mask);
+  sig.sa_flags = 0;
+  sig.sa_handler = handlerSIGALRM;
+  sigaction(SIGALRM,&sig,NULL);
 
   
   //********************************************************
@@ -69,6 +75,7 @@ int main(int argc,char* argv[])
   char newUser[20];
   MYSQL_RES  *resultat;
   MYSQL_ROW  Tuple;
+  int tempsRestant;
 
   //********************************************************
   // Debut du pc
@@ -76,11 +83,21 @@ int main(int argc,char* argv[])
 
   while(1)
   {
+
+    //****************************
+    // Mise en place du timer
+    //****************************
+    ERROR_PRINT("DEBUT ALARM");
+    alarm(10);
+
     if (msgrcv(idQ,&m,sizeof(MESSAGE)-sizeof(long),getpid(),0) == -1)
     {
       perror("(CADDIE) Erreur de msgrcv");
       exit(1);
     }
+
+    ERROR_PRINT("FIN ALARM");
+    tempsRestant = alarm(0);
 
     switch(m.requete)
     {
@@ -272,11 +289,36 @@ int main(int argc,char* argv[])
 void handlerSIGALRM(int sig)
 {
   fprintf(stderr,"(CADDIE %d) Time Out !!!\n",getpid());
-
+  
   // Annulation du caddie et mise à jour de la BD
   // On envoie a AccesBD autant de requetes CANCEL qu'il y a d'articles dans le panier
-
+  MESSAGE reponse;
+  for(auto& i : articles)
+  {
+    if(i.id != 0)
+    {
+      clearMessage(reponse);
+      makeMessageBasic(reponse,getpid(),getpid(),CANCEL);
+      reponse.data1 = i.id;
+      sprintf(reponse.data3,"%d",i.stock);
+      write(fdWpipe,&reponse,sizeof(reponse));
+      // On vide le panier
+      i = {0};
+    }
+  }                      
+  nbArticles = 0;
   // Envoi d'un Time Out au client (s'il existe toujours)
-         
+
+  if(kill(pidClient,0) != 0)
+  {
+    NORMAL_PRINT("LE CLIENT N'EXISTE PLUS!");
+    exit(0);
+  }
+
+  clearMessage(reponse);
+  makeMessageBasic(reponse,pidClient,getpid(),TIME_OUT);
+  sendMessageQueue(idQ,reponse);
+  kill(pidClient,SIGUSR1);
+
   exit(0);
 }

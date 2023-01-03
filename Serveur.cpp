@@ -270,9 +270,12 @@ int main()
                           //**************************************
                           // Tuer le pcs Caddie avec un message
                           //**************************************
-                          clearMessage(reponse);
-                          makeMessageBasic(reponse,i.pidCaddie,SERVEUR,LOGOUT);
-                          sendMessageQueue(idQ,reponse,"(SERVEUR) LOGOUT");
+                          if(i.pidCaddie != 0)
+                          {
+                            clearMessage(reponse);
+                            makeMessageBasic(reponse,i.pidCaddie,SERVEUR,LOGOUT);
+                            sendMessageQueue(idQ,reponse,"(SERVEUR) LOGOUT");
+                          }
                           break;
                         }
                       }
