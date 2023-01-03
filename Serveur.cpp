@@ -336,6 +336,17 @@ int main()
 
       case CANCEL :   // TO DO
                       fprintf(stderr,"(SERVEUR %d) Requete CANCEL reçue de %d\n",getpid(),m.expediteur);
+                      for(const auto& [pidF,nom,pidC] : tab->connexions)
+                      {
+                        if(pidF == m.expediteur)
+                        {
+                          clearMessage(reponse);
+                          makeMessageBasic(reponse,pidC,m.expediteur,CANCEL);
+                          reponse.data1 = m.data1;
+                          sendMessageQueue(idQ,reponse);
+                          break;
+                        }
+                      }
                       break;
 
       case CANCEL_ALL : // TO DO

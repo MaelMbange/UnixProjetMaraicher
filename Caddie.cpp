@@ -222,7 +222,8 @@ int main(int argc,char* argv[])
                       fprintf(stderr,"(CADDIE %d) Requete CANCEL reçue de %d\n",getpid(),m.expediteur);
 
                       // on transmet la requete à AccesBD
-
+                      articles[m.data1] = {0};
+                      nbArticles--;
                       // Suppression de l'aricle du panier
                       break;
 

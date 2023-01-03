@@ -454,8 +454,6 @@ void WindowClient::on_pushButtonSupprimer_clicked()
     // Envoi d'une requete CANCEL au serveur
 
     // Mise à jour du caddie
-    // w->videTablePanier();
-    // totalCaddie = 0.0;
     // w->setTotal(-1.0);
     articleSelectionne = w->getIndiceArticleSelectionne();
     if(articleSelectionne == -1)
@@ -463,7 +461,21 @@ void WindowClient::on_pushButtonSupprimer_clicked()
       w->dialogueErreur("Suppression","Aucun article selectionné!");
     }
 
+    w->videTablePanier();
+    totalCaddie = 0.0;
+
+    fprintf(stderr,"VALEUR INDICE %d\n",articleSelectionne);
+
+    MESSAGE reponse;
+    clearMessage(reponse);
+    makeMessageBasic(reponse,SERVEUR,getpid(),CANCEL);
+    reponse.data1 = articleSelectionne;
+    sendMessageQueue(idQ,reponse);
+
     // Envoi requete CADDIE au serveur
+    clearMessage(reponse);
+    makeMessageBasic(reponse,SERVEUR,getpid(),CADDIE);
+    sendMessageQueue(idQ,reponse);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
