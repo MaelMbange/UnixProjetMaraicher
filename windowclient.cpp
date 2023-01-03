@@ -448,13 +448,20 @@ void WindowClient::on_pushButtonAcheter_clicked()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void WindowClient::on_pushButtonSupprimer_clicked()
 {
+  NORMAL_PRINT("CLIC BOUTON SUPPRIMER");
+  int articleSelectionne;
     // TO DO (étape 6)
     // Envoi d'une requete CANCEL au serveur
 
     // Mise à jour du caddie
-    w->videTablePanier();
-    totalCaddie = 0.0;
-    w->setTotal(-1.0);
+    // w->videTablePanier();
+    // totalCaddie = 0.0;
+    // w->setTotal(-1.0);
+    articleSelectionne = w->getIndiceArticleSelectionne();
+    if(articleSelectionne == -1)
+    {
+      w->dialogueErreur("Suppression","Aucun article selectionné!");
+    }
 
     // Envoi requete CADDIE au serveur
 }

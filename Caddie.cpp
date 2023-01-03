@@ -167,7 +167,12 @@ int main(int argc,char* argv[])
 
                         for(auto& i : articles)
                         {
-                          if(i.id == 0)
+                          if(i.id == reponse.data1)
+                          {
+                            i.stock += atoi(reponse.data3);
+                            break;
+                          }
+                          else if(i.id == 0)
                           {
                             i.id = reponse.data1;
                             strncpy(i.intitule,reponse.data2,20);
@@ -207,7 +212,7 @@ int main(int argc,char* argv[])
                           sendMessageQueue(idQ,reponse);
                           kill(pidClient,SIGUSR1); 
                           printMessage(reponse); 
-                          usleep(100'000);
+                          usleep(10'000);
                         }                      
                       }
 
