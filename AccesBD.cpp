@@ -110,7 +110,7 @@ int main(int argc,char* argv[])
                       if(found)
                       {
                         makeMessageBasic(reponse,m.expediteur,getpid(),CONSULT);
-                        makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],Tuple[3],Tuple[4],atoi(Tuple[2]));
+                        makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],Tuple[3],Tuple[4],atof(Tuple[2]));
                       }
                       else
                       {
@@ -153,12 +153,12 @@ int main(int argc,char* argv[])
                               exit(1);
                             }
                             // sprintf(reponse.data3,"%d",m.data3);
-                            makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],m.data3,Tuple[4],atoi(Tuple[2]));
+                            makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],m.data3,Tuple[4],atof(Tuple[2]));
                           }
                           else
                           {
                             //Pas assez d'element de stock
-                            makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],"0",Tuple[4],atoi(Tuple[2]));
+                            makeMessageData(reponse,atoi(Tuple[0]),Tuple[1],"0",Tuple[4],atof(Tuple[2]));
                           }
                           printMessage(reponse);
                           sendMessageQueue(idQ,reponse);

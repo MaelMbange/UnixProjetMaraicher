@@ -248,7 +248,7 @@ int main(int argc,char* argv[])
 
                       articles[m.data1] = {0};
 
-                      for (size_t i = m.data1; i < 9; i++)
+                      for (size_t i = m.data1; i < nbArticles; i++)
                       {
                         articles[i] = articles[i+1];
                       }

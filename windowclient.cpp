@@ -467,6 +467,7 @@ void WindowClient::on_pushButtonSupprimer_clicked()
     if(articleSelectionne == -1)
     {
       w->dialogueErreur("Suppression","Aucun article selectionné!");
+      return;
     }
 
     w->videTablePanier();
