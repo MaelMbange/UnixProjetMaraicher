@@ -205,6 +205,11 @@ void WindowGerant::on_pushButtonPublicite_clicked()
   fprintf(stderr,"(GERANT %d) Clic sur bouton Mettre a jour\n",getpid());
   // TO DO (étape 7)
   // Envoi d'une requete NEW_PUB au serveur
+  MESSAGE rep;
+  clearMessage(rep);
+  makeMessageBasic(rep,SERVEUR,getpid(),NEW_PUB);
+  strcpy(rep.data4,getPublicite());
+  sendMessageQueue(idQ,rep);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

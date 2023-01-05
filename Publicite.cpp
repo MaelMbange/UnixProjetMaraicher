@@ -11,12 +11,16 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
+#include <setjmp.h>
 #include "protocole.h" // contient la cle et la structure d'un message
 
 int idQ, idShm;
 char *pShm;
 void handlerSIGUSR1(int sig);
 int fd;
+sigjmp_buf back;
+
+char Pub[51];
 
 char txt[100];
 
@@ -57,7 +61,8 @@ int main()
   pShm = connectSharedMemory(idShm,"RW");
 
   //Copier dans un (char[51]) le contenu de la memoire partagée
-  char Pub[51] = {0};
+  sigsetjmp(back,1);
+  Pub[51] = {0};
   sprintf(Pub,"%50s","");
   //fprintf(stderr,"ICI : %d\n",Pub[50]);
 
@@ -110,7 +115,10 @@ void handlerSIGUSR1(int sig)
   fprintf(stderr,"(PUBLICITE %d) Nouvelle publicite !\n",getpid());
 
   // Lecture message NEW_PUB
-
+  MESSAGE m;
+  recieveMessageQueue(idQ,m,getpid());
   // Mise en place de la publicité en mémoire partagée
+  strcpy(pShm,m.data4);
+  siglongjmp(back,0);
 }
 

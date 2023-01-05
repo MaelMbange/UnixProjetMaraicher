@@ -461,6 +461,11 @@ int main()
 
       case NEW_PUB :  // TO DO
                       fprintf(stderr,"(SERVEUR %d) Requete NEW_PUB reçue de %d\n",getpid(),m.expediteur);
+                      clearMessage(reponse);
+                      makeMessageBasic(reponse,tab->pidPublicite,getpid(),NEW_PUB);
+                      strcpy(reponse.data4,m.data4);
+                      sendMessageQueue(idQ,reponse);
+                      kill(tab->pidPublicite,SIGUSR1);
                       break;
     }
     // system("clear");
