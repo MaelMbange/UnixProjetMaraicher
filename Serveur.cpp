@@ -72,6 +72,11 @@ int main()
     ERROR_PRINT("Erreur ouverture pipe");
     exit(1);
   } 
+  //********************************************************
+  // Creation du semaphore
+  //********************************************************
+  idSem = createSemaphore(CLE,1);
+  setValueSemaphore(idSem);
 
   //********************************************************
   // Initialisation du tableau de connexions
@@ -127,11 +132,13 @@ int main()
   while(1)
   {
     if(recieveMessageQueue(idQ,m,SERVEUR,"Erreur rcv Serveur")==-1)
-      exit(1);
-    
+      exit(1);    
 
     clearMessage(reponse);
     // fprintf(stderr,"\033[H\033[J");
+    int semVal = sem_wait(idSem,0,IPC_NOWAIT);
+    if(semVal != -1) sem_signal(idSem,0);
+
     switch(m.requete)
     {
       case CONNECT :  // TO DO
@@ -184,6 +191,15 @@ int main()
                       //data = 0 si la case nvC n'est pas cochée
                       //     = 1 si la case nvC est cochée
                       // clearMessage(reponse);
+                      if(semVal == -1)
+                      {
+                        clearMessage(reponse);
+                        makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                        sendMessageQueue(idQ,reponse);
+                        kill(m.expediteur,SIGUSR1);
+                        break;
+                      }
+
                       if(m.data1 == 0)
                       {
                         int ret = logIn(m.data2,m.data3);
@@ -262,6 +278,15 @@ int main()
                       break; 
 
       case LOGOUT :   // TO DO
+                      if(semVal == -1)
+                      {
+                        clearMessage(reponse);
+                        makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                        sendMessageQueue(idQ,reponse);
+                        kill(m.expediteur,SIGUSR1);
+                        break;
+                      }
+
                       for(auto& i : tab->connexions)
                       {
                         if(i.pidFenetre == m.expediteur)
@@ -292,6 +317,15 @@ int main()
                       break;
 
       case CONSULT :  // TO DO
+                      if(semVal == -1)
+                      {
+                        clearMessage(reponse);
+                        makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                        sendMessageQueue(idQ,reponse);
+                        kill(m.expediteur,SIGUSR1);
+                        break;
+                      }
+
                       fprintf(stderr,"(SERVEUR %d) Requete CONSULT reçue de %d\n",getpid(),m.expediteur);
                       
                       for(const auto& [pidF,nom,pidC] : tab->connexions)
@@ -309,6 +343,15 @@ int main()
                       break;
 
       case ACHAT :    // TO DO
+                      if(semVal == -1)
+                      {
+                        clearMessage(reponse);
+                        makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                        sendMessageQueue(idQ,reponse);
+                        kill(m.expediteur,SIGUSR1);
+                        break;
+                      }
+
                       fprintf(stderr,"(SERVEUR %d) Requete ACHAT reçue de %d\n",getpid(),m.expediteur);
                       for(const auto& [pidF,nom,pidC] : tab->connexions)
                       {
@@ -324,6 +367,15 @@ int main()
                       break;
 
       case CADDIE :   // TO DO
+                      if(semVal == -1)
+                      {
+                        clearMessage(reponse);
+                        makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                        sendMessageQueue(idQ,reponse);
+                        kill(m.expediteur,SIGUSR1);
+                        break;
+                      }
+
                       fprintf(stderr,"(SERVEUR %d) Requete CADDIE reçue de %d\n",getpid(),m.expediteur);
                       for(const auto& [pidF,nom,pidC] : tab->connexions)
                       {
@@ -338,6 +390,15 @@ int main()
                       break;
 
       case CANCEL :   // TO DO
+                      if(semVal == -1)
+                      {
+                        clearMessage(reponse);
+                        makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                        sendMessageQueue(idQ,reponse);
+                        kill(m.expediteur,SIGUSR1);
+                        break;
+                      }
+
                       fprintf(stderr,"(SERVEUR %d) Requete CANCEL reçue de %d\n",getpid(),m.expediteur);
                       for(const auto& [pidF,nom,pidC] : tab->connexions)
                       {
@@ -353,6 +414,15 @@ int main()
                       break;
 
       case CANCEL_ALL : // TO DO
+                      if(semVal == -1)
+                      {
+                        clearMessage(reponse);
+                        makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                        sendMessageQueue(idQ,reponse);
+                        kill(m.expediteur,SIGUSR1);
+                        break;
+                      }
+
                       fprintf(stderr,"(SERVEUR %d) Requete CANCEL_ALL reçue de %d\n",getpid(),m.expediteur);
                       for(const auto& [pidF,nom,pidC] : tab->connexions)
                       {
@@ -367,6 +437,15 @@ int main()
                       break;
 
       case PAYER : // TO DO
+                      if(semVal == -1)
+                      {
+                        clearMessage(reponse);
+                        makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                        sendMessageQueue(idQ,reponse);
+                        kill(m.expediteur,SIGUSR1);
+                        break;
+                      }
+
                       fprintf(stderr,"(SERVEUR %d) Requete PAYER reçue de %d\n",getpid(),m.expediteur);
                       for(const auto& [pidF,nom,pidC] : tab->connexions)
                       {
@@ -403,7 +482,7 @@ void handlerSIGINT(int sig)
   deleteMessageQueue(idQ);
   deleteSharedMemory(idShm);
   closePipe(fdPipe);
-
+  deleteSemaphore(idSem);
 
   exit(0);
 }

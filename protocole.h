@@ -317,4 +317,78 @@ void closePipe(int* vec,const char* msg)
   }
 }
 
+//****************************
+// SEMAPHORE
+//****************************
 
+typedef union semun
+{
+int val;
+struct semid_ds *buf;
+unsigned short *array;
+} semun;
+
+
+int createSemaphore(int Key,int nbr);
+int setValueSemaphore(int idSem, int num = 0,int arg = 1);
+int getSemaphore(int Key);
+int deleteSemaphore(int idSem);
+int sem_wait(int idSem,int num,int flag = SEM_UNDO);
+int sem_signal(int idSem,int num);
+
+int createSemaphore(int Key,int nbr)
+{
+  int idSem = semget(Key,nbr,IPC_CREAT | IPC_EXCL | 0777);
+  if(idSem == -1)
+  {
+    ERROR_PRINT("Erreur creation semaphore");
+    exit(1);
+  }
+  return idSem;
+}
+int setValueSemaphore(int idSem, int num, int arg)
+{
+  int res = semctl(idSem,num,SETVAL,arg);
+  if(res == -1)
+  {
+    ERROR_PRINT("Erreur Set valeur semaphore");
+    exit(1);
+  }
+  return res;
+}
+int getSemaphore(int Key)
+{
+  int idSem = semget(Key,0,0);
+  if(idSem == -1)
+  {
+    ERROR_PRINT("Erreur Recuperation semaphore");
+    exit(1);
+  }
+  return idSem;
+}
+int deleteSemaphore(int idSem)
+{
+  int res = semctl(idSem,0,IPC_RMID,NULL);
+  if(res == -1)
+  {
+    ERROR_PRINT("Erreur Suppression semaphore");
+    exit(1);
+  }
+  return res;
+}
+int sem_wait(int idSem,int num,int flag)
+{
+  struct sembuf action;
+  action.sem_num = num;
+  action.sem_op = -1;
+  action.sem_flg = flag;
+  return semop(idSem,&action,1);
+}
+int sem_signal(int idSem,int num)
+{
+  struct sembuf action;
+  action.sem_num = num;
+  action.sem_op = +1;
+  action.sem_flg = SEM_UNDO;
+  return semop(idSem,&action,1);
+}

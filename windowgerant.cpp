@@ -38,13 +38,15 @@ WindowGerant::WindowGerant(QWidget *parent) : QMainWindow(parent),ui(new Ui::Win
 
     // Recuperation de la file de message
     // TO DO
-    // idQ = getMessageQueue(CLE,"Erreur msget WINDOW GERANT");
+    idQ = getMessageQueue(CLE,"Erreur msget WINDOW GERANT");
 
     // Récupération du sémaphore
     // TO DO
+    idSem = getSemaphore(CLE);
 
     // Prise blocante du semaphore
     // TO DO
+    sem_wait(idSem,0);
 
     // Connexion à la base de donnée
     connexion = mysql_init(NULL);
@@ -190,6 +192,7 @@ void WindowGerant::closeEvent(QCloseEvent *event)
 
   // Liberation du semaphore
   // TO DO
+  sem_signal(idSem,0);
 
   exit(0);
 }
@@ -225,8 +228,20 @@ void WindowGerant::on_pushButtonModifier_clicked()
 
   fprintf(stderr,"(GERANT %d) Modification en base de données pour id=%d\n",getpid(),idArticleSelectionne);
 
-  // Mise a jour table BD
-  // TO DO
+  // Mise a jour table BD  
+  sprintf(requete,"UPDATE UNIX_FINAL SET stock = %d, prix = %s " 
+                  "WHERE id = %d;"
+                  ,stock,tmp.c_str(),idSel);
+
+  // Mise à jour du stock en BD
+  if (mysql_query(connexion,requete) != 0)
+  {
+    fprintf(stderr, "Erreur de mysql_query: %s\n",mysql_error(connexion));
+    exit(1);
+  }
+
+  videTableStock();
+
   sprintf(requete,"select * from  UNIX_FINAL;");
   if (mysql_query(connexion,requete) != 0)
   {
@@ -243,20 +258,7 @@ void WindowGerant::on_pushButtonModifier_clicked()
 
   while((Tuple = mysql_fetch_row(resultat)) != NULL)
   {
-    //fprintf(stderr, "NO ID = %d\nNo Indice = %d\nPrix = %s\n",atoi(Tuple[0]),idSel,tmp.c_str()); 
-    if(atoi(Tuple[0]) == idSel)
-    {
-      sprintf(requete,"UPDATE UNIX_FINAL SET stock = %d, prix = %s " 
-                      "WHERE id = %d;"
-                      ,stock,tmp.c_str(),idSel);
-
-      // Mise à jour du stock en BD
-      if (mysql_query(connexion,requete) != 0)
-      {
-        fprintf(stderr, "Erreur de mysql_query: %s\n",mysql_error(connexion));
-        exit(1);
-      }
-      break;
-    }
+    // fprintf(stderr, "NO ID = %d\n",atoi(Tuple[0])); 
+    ajouteArticleTablePanier(atoi(Tuple[0]),Tuple[1],atof(Tuple[2]),atoi(Tuple[3]));
   }
 }

@@ -88,7 +88,7 @@ int main(int argc,char* argv[])
     // Mise en place du timer
     //****************************
     ERROR_PRINT("DEBUT ALARM");
-    alarm(60);
+    alarm(10);
 
     if (msgrcv(idQ,&m,sizeof(MESSAGE)-sizeof(long),getpid(),0) == -1)
     {
@@ -181,7 +181,6 @@ int main(int argc,char* argv[])
                       // Envoi de la reponse au client
                       if(strcmp(reponse.data3,"0") != 0)
                       {
-
                         for(auto& i : articles)
                         {
                           if(i.id == reponse.data1)
@@ -252,7 +251,7 @@ int main(int argc,char* argv[])
                       {
                         articles[i] = articles[i+1];
                       }
-                      articles[9] = {0};
+                      articles[nbArticles] = {0};
                       
                       nbArticles--;
                       // Suppression de l'aricle du panier

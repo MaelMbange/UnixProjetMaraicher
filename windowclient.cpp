@@ -635,6 +635,7 @@ void handlerSIGUSR1(int sig)
                     break;
 
          case BUSY : // TO DO (étape 7)
+                    w->dialogueErreur("Reponse serveur","Serveur en maintenance, réessayez plus tard… Merci.");
                     break;
 
          default :
