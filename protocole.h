@@ -46,6 +46,8 @@
 #define BUSY         13  // S  -> Cl
 #define NEW_PUB      14  // Ge -> S                                                publicite
 //                          S  -> P                                                publicite
+#define ISBUSY       15
+
 
 typedef struct 
 {

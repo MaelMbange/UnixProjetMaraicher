@@ -278,14 +278,14 @@ int main()
                       break; 
 
       case LOGOUT :   // TO DO
-                      if(semVal == -1)
+                      /*if(semVal == -1)
                       {
                         clearMessage(reponse);
                         makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
                         sendMessageQueue(idQ,reponse);
                         kill(m.expediteur,SIGUSR1);
                         break;
-                      }
+                      }*/
 
                       for(auto& i : tab->connexions)
                       {
@@ -467,6 +467,22 @@ int main()
                       sendMessageQueue(idQ,reponse);
                       kill(tab->pidPublicite,SIGUSR1);
                       break;
+      case ISBUSY :
+                    if(semVal == -1)
+                    {
+                      clearMessage(reponse);
+                      makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                      makeMessageData(reponse,1);
+                      sendMessageQueue(idQ,reponse);
+                      break;
+                    }
+
+                    clearMessage(reponse);
+                    makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
+                    makeMessageData(reponse,0);
+                    sendMessageQueue(idQ,reponse);
+
+                    break;
     }
     // system("clear");
     afficheTab();

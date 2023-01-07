@@ -470,6 +470,19 @@ void WindowClient::on_pushButtonSupprimer_clicked()
       return;
     }
 
+    MESSAGE m;
+    clearMessage(m);
+    makeMessageBasic(m,SERVEUR,getpid(),ISBUSY);
+    sendMessageQueue(idQ,m);
+
+    MESSAGE rep;
+    recieveMessageQueue(idQ,rep,getpid());
+    if(rep.data1 == 1)
+    {
+      w->dialogueErreur("Reponse serveur","Serveur en maintenance, réessayez plus tard… Merci.");
+      return;
+    }
+
     w->videTablePanier();
     totalCaddie = 0.0;
     w->setTotal(totalCaddie);
@@ -494,6 +507,18 @@ void WindowClient::on_pushButtonViderPanier_clicked()
     // TO DO (étape 6)
     // Envoi d'une requete CANCEL_ALL au serveur
     MESSAGE m;
+    clearMessage(m);
+    makeMessageBasic(m,SERVEUR,getpid(),ISBUSY);
+    sendMessageQueue(idQ,m);
+
+    MESSAGE rep;
+    recieveMessageQueue(idQ,rep,getpid());
+    if(rep.data1 == 1)
+    {
+      w->dialogueErreur("Reponse serveur","Serveur en maintenance, réessayez plus tard… Merci.");
+      return;
+    }
+
     clearMessage(m);
     makeMessageBasic(m,SERVEUR,getpid(),CANCEL_ALL);
     sendMessageQueue(idQ,m);
@@ -626,6 +651,19 @@ void handlerSIGUSR1(int sig)
          case TIME_OUT : // TO DO (étape 6)
                     w->logoutOK();
                     w->dialogueErreur("TIME OUT","Déconnecté pour cause d’inactivité!");
+
+                    /*MESSAGE m;
+                    clearMessage(m);
+                    makeMessageBasic(m,SERVEUR,getpid(),ISBUSY);
+                    sendMessageQueue(idQ,m);
+
+                    MESSAGE rep;
+                    recieveMessageQueue(idQ,rep,getpid());
+                    if(rep.data1 == 1)
+                    {
+                      return;
+                    }*/
+
                     logged = false;
                     MESSAGE msg;
                     clearMessage(msg);
