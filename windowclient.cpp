@@ -394,6 +394,10 @@ void WindowClient::on_pushButtonLogout_clicked()
 {
     // Envoi d'une requete CANCEL_ALL au serveur (au cas où le panier n'est pas vide)
     // TO DO
+    MESSAGE CALL;
+    clearMessage(CALL);
+    makeMessageBasic(CALL,SERVEUR,getpid(),CANCEL_ALL);
+    sendMessageQueue(idQ,CALL); 
 
     // Envoi d'une requete de logout au serveur
     // TO DO

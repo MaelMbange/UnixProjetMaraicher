@@ -278,14 +278,14 @@ int main()
                       break; 
 
       case LOGOUT :   // TO DO
-                      /*if(semVal == -1)
+                      if(semVal == -1)
                       {
                         clearMessage(reponse);
                         makeMessageBasic(reponse,m.expediteur,getpid(),BUSY);
                         sendMessageQueue(idQ,reponse);
                         kill(m.expediteur,SIGUSR1);
                         break;
-                      }*/
+                      }
 
                       for(auto& i : tab->connexions)
                       {
